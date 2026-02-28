@@ -399,14 +399,21 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        // Since there could be dependencies in public_job_postings or postulaciones (candidatos_vacantes),
-        // we should delete them first or rely on standard MySQL ON DELETE CASCADE if set up.
-        // Let's delete public portal entries manually just to be safe if CASCADE isn't on.
-        await pool.query('DELETE FROM public_job_postings WHERE vacante_id = ?', [id]);
+        // 1. Eliminar referencias en el portal público
+        await pool.query('DELETE FROM public_job_postings WHERE vacante_id = ?', [id]).catch(e => console.log('public error', e.message));
 
-        // Also delete associations (candidatos_vacantes) if they exist.
-        // Assuming there might be dependencies, we can optionally clear them.
-        await pool.query('DELETE FROM candidatos_vacantes WHERE vacancia_id = ?', [id]);
+        // 2. Eliminar referencias en las postulaciones públicas (applications)
+        await pool.query('DELETE FROM applications WHERE vacante_id = ?', [id]).catch(e => console.log('apps schema error', e.message));
+
+        // 3. Eliminar referencias en el historial de las etapas
+        await pool.query('DELETE FROM historial_etapas WHERE vacante_id = ?', [id]).catch(e => console.log('historial error', e.message));
+
+        // 4. Eliminar referencias en tarjetas de candidatos_seguimiento
+        await pool.query('DELETE FROM candidatos_seguimiento WHERE vacante_id = ?', [id]).catch(e => console.log('seguimiento error', e.message));
+
+        // 5. Eliminar asociaciones si la tabla se llama candidatos_vacantes
+        await pool.query('DELETE FROM candidatos_vacantes WHERE vacancia_id = ?', [id]).catch(e => console.log('assoc error', e.message));
+        await pool.query('DELETE FROM candidatos_vacantes WHERE vacante_id = ?', [id]).catch(e => console.log('assoc error2', e.message));
 
         const [result] = await pool.query('DELETE FROM vacantes WHERE id = ?', [id]);
 
