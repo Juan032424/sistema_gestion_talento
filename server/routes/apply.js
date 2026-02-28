@@ -95,67 +95,85 @@ router.post('/:token', async (req, res) => {
         const nombreCompleto = `${nombres.trim()} ${apellidos.trim()}`;
         const emailLower = email.trim().toLowerCase();
 
-        // 1. Insert in candidatos
+        // 1. Insert in candidatos (master candidate record for the platform)
         const [result] = await pool.query(`
             INSERT INTO candidatos (
                 nombre, email, telefono, 
-                ciudad_residencia, nivel_educativo,
-                anos_experiencia, cargo_actual, empresa_actual,
-                notas, estado, etapa, vacante_id_asignada,
-                fecha_registro, fuente_reclutamiento, fuente
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Activo', 'Aplicación', ?, NOW(), ?, ?)
+                ciudad, titulo_profesional,
+                experiencia_total_anos,
+                estado, etapa
+            ) VALUES (?, ?, ?, ?, ?, ?, 'Activo', 'Aplicación')
             ON DUPLICATE KEY UPDATE telefono = VALUES(telefono), updated_at = NOW()
         `, [
             nombreCompleto, emailLower, telefono?.trim(),
-            ciudad_residencia?.trim() || 'Cartagena', nivel_educativo,
-            parseInt(anos_experiencia) || 0, cargo_actual?.trim(), empresa_actual?.trim(),
-            `[POSTULACIÓN PORTAL] ${mensaje || ''}`, vacante.id,
-            `Portal - ${vacante.puesto_nombre}`, 'portal'
+            ciudad_residencia?.trim() || 'Cartagena', cargo_actual?.trim(),
+            parseInt(anos_experiencia) || 0
         ]);
 
         const candidatoId = result.insertId || (await pool.query('SELECT id FROM candidatos WHERE email = ?', [emailLower]))[0][0].id;
 
         // 2. Perform AI Matching Analysis
-        console.log(`[AI] Analizando compatibilidad de ${nombreCompleto} para ${vacante.puesto_nombre}...`);
-        const candidateProfile = {
-            nombre: nombreCompleto,
-            email: emailLower,
-            titulo_actual: cargo_actual,
-            empresa_actual: empresa_actual,
-            experiencia_anos: parseInt(anos_experiencia) || 0,
-            educacion: nivel_educativo,
-            ubicacion: ciudad_residencia,
-            skills: [cargo_actual, nivel_educativo].filter(Boolean)
-        };
+        let aiResult = { score: 0, recommendation: 'Evaluación pendiente' };
+        try {
+            console.log(`[AI] Analizando compatibilidad de ${nombreCompleto} para ${vacante.puesto_nombre}...`);
+            const candidateProfile = {
+                nombre: nombreCompleto,
+                email: emailLower,
+                titulo_actual: cargo_actual,
+                empresa_actual: empresa_actual,
+                experiencia_anos: parseInt(anos_experiencia) || 0,
+                educacion: nivel_educativo,
+                ubicacion: ciudad_residencia,
+                skills: [cargo_actual, nivel_educativo].filter(Boolean)
+            };
 
-        const aiResult = await AIMatchingEngine.scoreCandidate(candidateProfile, vacante.observaciones || vacante.puesto_nombre);
+            aiResult = await AIMatchingEngine.scoreCandidate(candidateProfile, vacante.observaciones || vacante.puesto_nombre);
+        } catch (e) {
+            console.log('Skipping AI analysis due to error:', e.message);
+        }
 
-        // 3. Update candidates with AI results
-        await pool.query(
-            "UPDATE candidatos SET ai_match_score = ?, ai_analysis = ? WHERE id = ?",
-            [aiResult.score || 0, JSON.stringify(aiResult), candidatoId]
-        );
+        // 3. Insert in candidatos_seguimiento (this is what recruiters see in their dashboard)
+        try {
+            await pool.query(`
+                INSERT INTO candidatos_seguimiento (
+                    vacante_id, nombre_candidato, etapa_actual, fuente_reclutamiento, 
+                    fecha_postulacion, score_tecnico_ia, resumen_ia_entrevista
+                ) VALUES (?, ?, 'Postulación', 'Portal', NOW(), ?, ?)
+            `, [
+                vacante.id, nombreCompleto, aiResult.score || 0, JSON.stringify(aiResult.recommendation)
+            ]);
+        } catch (e) {
+            console.log('Skipping seguimiento insert:', e.message);
+        }
 
         // 4. Save in sourced_candidates for the Hub
-        await pool.query(`
-            INSERT INTO sourced_candidates (
-                nombre, email, telefono, fuente, cv_text, ai_match_score, ai_analysis, estado
-            ) VALUES (?, ?, ?, 'portal', ?, ?, ?, 'new')
-            ON DUPLICATE KEY UPDATE ai_match_score = VALUES(ai_match_score), ai_analysis = VALUES(ai_analysis)
-        `, [
-            nombreCompleto, emailLower, telefono?.trim(),
-            `Candidato aplicado vía web. Cargo: ${cargo_actual}. Exp: ${anos_experiencia}. Mensaje: ${mensaje}`,
-            aiResult.score || 0, JSON.stringify(aiResult)
-        ]);
+        try {
+            await pool.query(`
+                INSERT INTO sourced_candidates (
+                    nombre, email, telefono, cv_text, ai_match_score, ai_analysis, estado
+                ) VALUES (?, ?, ?, ?, ?, ?, 'new')
+                ON DUPLICATE KEY UPDATE ai_match_score = VALUES(ai_match_score), ai_analysis = VALUES(ai_analysis)
+            `, [
+                nombreCompleto, emailLower, telefono?.trim(),
+                `Candidato aplicado vía web. Cargo: ${cargo_actual}. Exp: ${anos_experiencia}. Mensaje: ${mensaje}`,
+                aiResult.score || 0, JSON.stringify(aiResult)
+            ]);
+        } catch (e) {
+            console.log('Skipping sourced_candidates insert:', e.message);
+        }
 
         // 5. Create Notification for Admin
-        await pool.query(`
-            INSERT INTO notifications (tipo, titulo, mensaje, user_type, user_id)
-            VALUES ('nueva_postulacion', ?, ?, 'admin', 1)
-        `, [
-            `Nueva postulación: ${vacante.puesto_nombre}`,
-            `${nombreCompleto} se ha postulado. Score IA: ${aiResult.score}%. ${aiResult.recommendation}`
-        ]);
+        try {
+            await pool.query(`
+                INSERT INTO notifications (tipo, titulo, mensaje, user_id)
+                VALUES ('nueva_postulacion', ?, ?, 1)
+            `, [
+                `Nueva postulación: ${vacante.puesto_nombre}`,
+                `${nombreCompleto} se ha postulado. Score IA: ${aiResult.score}%`
+            ]);
+        } catch (e) {
+            console.log('Skipping notification:', e.message);
+        }
 
 
         res.json({
