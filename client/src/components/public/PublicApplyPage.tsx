@@ -85,11 +85,11 @@ const PublicApplyPage: React.FC = () => {
     const [submitError, setSubmitError] = useState('');
     const [errors, setErrors] = useState<Partial<FormData>>({});
 
-    const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/api$/, '');
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
     useEffect(() => {
         if (!vacanteId) return;
-        fetch(`${API_BASE}/api/apply/${vacanteId}`)
+        fetch(`${API_BASE}/apply/${vacanteId}`)
             .then(r => r.json())
             .then(data => {
                 if (data.error) setVacancyError(data.error);
@@ -120,7 +120,7 @@ const PublicApplyPage: React.FC = () => {
         setSubmitError('');
 
         try {
-            const res = await fetch(`${API_BASE}/api/apply/${vacanteId}`, {
+            const res = await fetch(`${API_BASE}/apply/${vacanteId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form)
