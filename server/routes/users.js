@@ -145,6 +145,26 @@ router.get('/roles', verifyToken, async (req, res) => {
 });
 
 // ================================================================
+// GET /api/users/recruiters — Get active Reclutador users
+// ================================================================
+router.get('/recruiters', verifyToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT u.id, u.full_name as nombre, u.email 
+            FROM users u
+            JOIN roles r ON u.role_id = r.id
+            WHERE r.name IN ('Reclutador', 'Lider') AND u.status = 'active'
+            ORDER BY u.full_name ASC
+        `;
+        const [recruiters] = await pool.query(query);
+        res.json(recruiters);
+    } catch (error) {
+        console.error('Error fetching recruiters:', error);
+        res.status(500).json({ error: 'Error al obtener reclutadores' });
+    }
+});
+
+// ================================================================
 // DELETE /api/users/:id — Delete user
 // ================================================================
 router.delete('/:id', verifyToken, requireRole(['Superadmin', 'Admin']), async (req, res) => {

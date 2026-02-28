@@ -32,6 +32,7 @@ const VacanteForm: React.FC = () => {
     const [subcentros, setSubcentros] = useState<any[]>([]);
     const [tiposTrabajo, setTiposTrabajo] = useState<any[]>([]);
     const [tiposProyecto, setTiposProyecto] = useState<any[]>([]);
+    const [reclutadores, setReclutadores] = useState<any[]>([]);
 
     const [formData, setFormData] = useState({
         codigo_requisicion: '',
@@ -76,6 +77,14 @@ const VacanteForm: React.FC = () => {
                 setSubcentros(data.subcentros);
                 setTiposTrabajo(data.tiposTrabajo);
                 setTiposProyecto(data.tiposProyecto);
+
+                // Load Recruiters
+                try {
+                    const recRes = await api.get('/users/recruiters');
+                    setReclutadores(recRes.data);
+                } catch (e) {
+                    console.error('Error fetching recruiters:', e);
+                }
 
                 // 2. If Editing, Load Vacancy
                 if (isEditing) {
@@ -333,12 +342,16 @@ const VacanteForm: React.FC = () => {
                                     { value: 'Crítica', label: 'Crítica' }
                                 ]}
                             />
-                            <PremiumInput
+                            <PremiumSelect
                                 label="Responsable RH"
                                 name="responsable_rh"
                                 value={formData.responsable_rh}
                                 onChange={handleChange}
                                 icon={<Users size={16} />}
+                                options={[
+                                    { value: '', label: 'Ninguno' },
+                                    ...reclutadores.map(r => ({ value: r.nombre, label: r.nombre }))
+                                ]}
                             />
                             <PremiumInput
                                 label="Presupuesto Aprobado ($)"
