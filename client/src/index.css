@@ -1,0 +1,343 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #020617;
+  --bg-sidebar: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.5);
+  --border-color: rgba(255, 255, 255, 0.05);
+  --primary: #3b82f6;
+  --primary-glow: rgba(59, 130, 246, 0.4);
+  --accent: #8b5cf6;
+  --accent-glow: rgba(139, 92, 246, 0.4);
+}
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-200 font-sans antialiased overflow-x-hidden;
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at top left, #0f172a, #020617),
+      radial-gradient(circle at bottom right, #1e1b4b, #020617);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl transition-all duration-500;
+  }
+
+  .glass-panel:hover {
+    @apply border-white/10 bg-slate-900/60;
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.1);
+  }
+
+  .premium-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-violet-400 font-bold;
+  }
+
+  .premium-card-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .premium-card-glow::after {
+    content: '';
+    @apply absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-violet-600 rounded-3xl opacity-0 transition-opacity duration-500 blur-xl pointer-events-none;
+    z-index: -1;
+  }
+
+  .premium-card-glow:hover::after {
+    @apply opacity-20;
+  }
+
+  .nav-item-v3 {
+    @apply flex items-center gap-3 px-5 py-3 rounded-2xl transition-all duration-300 text-slate-400 hover:text-white hover:bg-white/5;
+  }
+
+  .nav-item-v3.active {
+    @apply text-white bg-blue-600/10 border border-blue-500/20 shadow-blue-500/5;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Animated background mesh gradient */
+  .mesh-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    background:
+      radial-gradient(at 0% 0%, hsla(222, 47%, 11%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(217, 32%, 17%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(220, 48%, 20%, 1) 0, transparent 50%),
+      radial-gradient(at 0% 50%, hsla(222, 47%, 14%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 50%, hsla(225, 39%, 23%, 1) 0, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(222, 47%, 18%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 100%, hsla(217, 32%, 25%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(231, 48%, 28%, 1) 0, transparent 50%);
+    filter: blur(100px);
+    opacity: 0.5;
+  }
+
+  /* ============================================
+     SIDEBAR LINK - Navigation Items
+     ============================================ */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .sidebar-link.active {
+    @apply text-white bg-[#1e4b7a]/30 border border-[#3a94cc]/20;
+    box-shadow: 0 0 20px rgba(58, 148, 204, 0.08);
+  }
+
+  /* ============================================
+     PREMIUM INPUT COMPONENTS - Floating Label
+     ============================================ */
+  .input-group-premium {
+    position: relative;
+    width: 100%;
+  }
+
+  .input-premium {
+    width: 100%;
+    background: #0d1117;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.1rem 1rem 0.5rem 1rem;
+    color: #e2e8f0;
+    font-size: 0.875rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.25s ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .input-premium:focus {
+    border-color: #3a94cc;
+    background: #0d1117;
+    box-shadow: 0 0 0 3px rgba(58, 148, 204, 0.12), 0 0 20px rgba(58, 148, 204, 0.08);
+  }
+
+  .input-premium:not(:placeholder-shown),
+  .input-premium:focus {
+    padding-top: 1.4rem;
+    padding-bottom: 0.4rem;
+  }
+
+  .input-premium::placeholder {
+    color: transparent;
+  }
+
+  .input-premium:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #0a0c10;
+  }
+
+  /* Floating Label */
+  .label-premium {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 2.5rem);
+  }
+
+  /* Float up when there is content or focus */
+  .input-premium:not(:placeholder-shown)~.label-premium,
+  .input-premium:focus~.label-premium {
+    top: 0.55rem;
+    transform: translateY(0);
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: #3a94cc;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Select specific - always float label up */
+  select.input-premium~.label-premium {
+    top: 0.55rem;
+    transform: translateY(0);
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: #3a94cc;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  select.input-premium {
+    padding-top: 1.4rem;
+    padding-bottom: 0.4rem;
+    padding-right: 2.5rem;
+    /* space for arrow */
+    cursor: pointer;
+  }
+
+  /* Hover effect on container */
+  .input-group-premium:hover .input-premium:not(:focus) {
+    border-color: rgba(58, 148, 204, 0.35);
+  }
+
+  /* Glow effect on focus */
+  .input-group-premium:focus-within .label-premium {
+    color: #3a94cc;
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(58, 148, 204, 0.3);
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(58, 148, 204, 0.6);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[#0d1117];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-[#1e4b7a]/40 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-[#3a94cc]/60;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@layer utilities {
+  .animate-swing {
+    animation: swing 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+  }
+
+  .glass-card {
+    @apply bg-[#161b22]/80 backdrop-blur-md border border-white/5 rounded-2xl shadow-xl transition-all duration-300 hover:border-white/10 hover:shadow-2xl;
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(30, 75, 122, 0.15), 0 8px 10px -6px rgba(30, 75, 122, 0.1);
+  }
+}
+
+@keyframes swing {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(15deg);
+  }
+
+  40% {
+    transform: rotate(-10deg);
+  }
+
+  60% {
+    transform: rotate(5deg);
+  }
+
+  80% {
+    transform: rotate(-5deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Premium Select Styles - Dark Theme */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #0d1117;
+  color: #e2e8f0;
+  padding: 0.5rem 1rem;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #1e4b7a;
+}
+
+/* Firefox select dropdown */
+@-moz-document url-prefix() {
+  select option {
+    background-color: #0d1117;
+  }
+
+  select option:hover {
+    background-color: #1e4b7a;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .stat-card,
+  .kanban-card {
+    border: 1px solid #ddd !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+}

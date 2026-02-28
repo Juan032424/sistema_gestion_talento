@@ -1,0 +1,8 @@
+[2026-02-18T17:13:22.680Z] INSERT ERROR: Cannot add or update a child row: a foreign key constraint fails (`sistema_gestion_talento`.`applications`, CONSTRAINT `fk_applications_candidate_account` FOREIGN KEY (`candidate_account_id`) REFERENCES `candidate_accounts` (`id`) ON DELETE SET NULL)
+SQL: INSERT INTO applications 
+                    (vacante_id, candidato_id, candidate_account_id, nombre, email, telefono, cv_url, 
+                    carta_presentacion, experiencia_anos, salario_esperado, 
+                    disponibilidad, auto_match_score, estado, fecha_postulacion)
+                    VALUES (8, 14, 14, 'Juan Palencia', 'loco@xn--gmail-sta.com', '3022965432', 'https://co.computrabajo.com/trabajo-de-gestor-cartera-en-cartagena-de-indias', '', '3', '333333', 'Inmediata', 56, 'Nueva', NOW())
+Params: "Cannot add or update a child row: a foreign key constraint fails (`sistema_gestion_talento`.`applications`, CONSTRAINT `fk_applications_candidate_account` FOREIGN KEY (`candidate_account_id`) REFERENCES `candidate_accounts` (`id`) ON DELETE SET NULL)"
+

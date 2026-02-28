@@ -1,0 +1,2 @@
+ALTER TABLE candidatos
+ADD COLUMN IF NOT EXISTS salario_esperado DECIMAL(12,2) DEFAULT 0;
