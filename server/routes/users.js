@@ -144,4 +144,31 @@ router.get('/roles', verifyToken, async (req, res) => {
     }
 });
 
+// ================================================================
+// DELETE /api/users/:id — Delete user
+// ================================================================
+router.delete('/:id', verifyToken, requireRole(['Superadmin', 'Admin']), async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // Prevent self-deletion
+        if (parseInt(id) === req.user.id) {
+            return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta' });
+        }
+
+        const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado o ya eliminado' });
+        }
+
+        console.log(`🗑️ User deleted (ID: ${id}) by ${req.user.email}`);
+        res.json({ success: true, message: 'Usuario eliminado exitosamente' });
+
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ error: 'Error al eliminar el usuario debido a dependencias en el sistema.' });
+    }
+});
+
 module.exports = router;

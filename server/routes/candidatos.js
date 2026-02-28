@@ -208,6 +208,31 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// DELETE Candidato
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Find if this candidate has a portal account linked
+        const [candidate] = await pool.query('SELECT nombre_candidato, vacante_id FROM candidatos_seguimiento WHERE id = ?', [id]);
+
+        if (candidate.length > 0) {
+            // Optional: delete matching logic in applications / history if needed
+            await pool.query('DELETE FROM historial_etapas WHERE candidato_id = ?', [id]);
+            await pool.query('DELETE FROM ai_evaluations WHERE candidate_id = ?', [id]);
+        }
+
+        const [result] = await pool.query('DELETE FROM candidatos_seguimiento WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Candidato no encontrado o ya eliminado' });
+        }
+        res.json({ message: 'Candidato eliminado correctamente' });
+    } catch (error) {
+        console.error('Error deleting candidato:', error);
+        res.status(500).json({ error: 'No se pudo eliminar el candidato debido a dependencias.' });
+    }
+});
+
 // GET candidate activity logs
 router.get('/:id/activity', async (req, res) => {
     const { id } = req.params; // ID de candidatos_seguimiento

@@ -395,4 +395,29 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// DELETE Vacante
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Since there could be dependencies in public_job_postings or postulaciones (candidatos_vacantes),
+        // we should delete them first or rely on standard MySQL ON DELETE CASCADE if set up.
+        // Let's delete public portal entries manually just to be safe if CASCADE isn't on.
+        await pool.query('DELETE FROM public_job_postings WHERE vacante_id = ?', [id]);
+
+        // Also delete associations (candidatos_vacantes) if they exist.
+        // Assuming there might be dependencies, we can optionally clear them.
+        await pool.query('DELETE FROM candidatos_vacantes WHERE vacancia_id = ?', [id]);
+
+        const [result] = await pool.query('DELETE FROM vacantes WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Vacante no encontrada o ya eliminada' });
+        }
+        res.json({ message: 'Vacante eliminada correctamente' });
+    } catch (error) {
+        console.error('Error deleting vacante:', error);
+        res.status(500).json({ error: 'No se pudo eliminar la vacante debido a dependencias en el sistema.' });
+    }
+});
+
 module.exports = router;
