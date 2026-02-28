@@ -275,7 +275,7 @@ const PublicApplyPage: React.FC = () => {
                         </div>
 
                         {/* Details */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-white/5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 pt-4 border-t border-white/5">
                             {[
                                 { icon: <MapPin size={13} />, label: vacancy.ciudad || 'Cartagena', color: 'text-blue-400' },
                                 { icon: <DollarSign size={13} />, label: vacancy.salario, color: 'text-emerald-400' },
