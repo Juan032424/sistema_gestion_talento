@@ -16,6 +16,7 @@ import ReferralPortal from './components/v3/referidos/ReferralPortal';
 import AISourcingHub from './components/v3/sourcing/AISourcingHub';
 import UserManagement from './components/UserManagement';
 import Evaluations from './components/Evaluations';
+import SuperAdminPanel from './components/SuperAdminPanel';
 
 import './chartConfig';
 
@@ -67,6 +68,7 @@ function AppRoutes() {
               <Route path="/analytics" element={<RecruiterAnalytics />} />
               <Route path="/usuarios" element={<UserManagement />} />
               <Route path="/evaluations" element={<Evaluations />} />
+              <Route path="/sistema" element={<SuperAdminPanel />} />
 
               {/* Fallback redirect to dashboard */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

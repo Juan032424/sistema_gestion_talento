@@ -99,6 +99,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         { name: 'Evaluaciones', path: '/evaluations', icon: ClipboardList, roles: ['Superadmin', 'Admin', 'Lider'] },
         { name: 'Sedes y Empresas', path: '/configuracion', icon: Settings, roles: ['Superadmin', 'Admin'] },
         { name: 'Gestión Usuarios', path: '/usuarios', icon: Shield, roles: ['Superadmin', 'Admin'] },
+        { name: '⚙ Sistema', path: '/sistema', icon: Settings, roles: ['Superadmin'] },
     ];
 
     const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
