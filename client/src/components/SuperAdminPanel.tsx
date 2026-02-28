@@ -79,17 +79,23 @@ const SuperAdminPanel: React.FC = () => {
 
     const fetchStats = useCallback(async () => {
         try {
-            const [usersRes, vacantesRes, candidatosRes, appsRes] = await Promise.all([
+            const [usersRes, vacantesRes, candidatosRes] = await Promise.all([
                 api.get('/users'),
                 api.get('/vacantes'),
                 api.get('/candidatos'),
-                api.get('/applications').catch(() => ({ data: [] })),
             ]);
+            // Get application count separately with correct endpoint
+            let appsCount = 0;
+            try {
+                const appsRes = await api.get('/applications/stats');
+                appsCount = appsRes.data?.total_applications || appsRes.data?.total || 0;
+            } catch { /* endpoint may not be accessible, ignore */ }
+
             setStats({
                 total_users: usersRes.data?.length || 0,
                 total_vacantes: vacantesRes.data?.length || 0,
                 total_candidatos: candidatosRes.data?.length || 0,
-                total_applications: Array.isArray(appsRes.data) ? appsRes.data.length : 0,
+                total_applications: appsCount,
                 active_vacantes: (vacantesRes.data || []).filter((v: any) => v.estado === 'Abierta').length,
             });
         } catch (err) {
@@ -130,9 +136,10 @@ const SuperAdminPanel: React.FC = () => {
     const fetchLogs = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.get('/agents/logs').catch(() => ({ data: [] }));
+            const res = await api.get('/agents/logs');
             setLogs(Array.isArray(res.data) ? res.data.slice(0, 100) : []);
-        } catch (err) {
+        } catch {
+            // Logs endpoint may not be available, show empty state
             setLogs([]);
         } finally { setLoading(false); }
     }, []);
