@@ -13,8 +13,17 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
+  keepAliveInitialDelay: 10000,
   charset: 'utf8mb4'
 });
+
+// Explicit ping to keep Railway proxy connection alive
+setInterval(async () => {
+  try {
+    await pool.query('SELECT 1');
+  } catch (err) {
+    console.error('Ping DB Error:', err.message);
+  }
+}, 10000);
 
 module.exports = pool;
