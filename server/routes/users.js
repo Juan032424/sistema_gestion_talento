@@ -159,8 +159,8 @@ router.get('/recruiters', verifyToken, async (req, res) => {
         const [recruiters] = await pool.query(query);
         res.json(recruiters);
     } catch (error) {
-        console.error('Error fetching recruiters:', error);
-        res.status(500).json({ error: 'Error al obtener reclutadores' });
+        console.error('Error fetching recruiters:', error.message);
+        res.status(500).json({ error: error.message || 'Error al obtener reclutadores' });
     }
 });
 
