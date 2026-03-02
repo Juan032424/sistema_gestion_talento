@@ -11,8 +11,9 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'sistema_gestion_talento',
   waitForConnections: true,
   connectionLimit: 10,
-  maxIdle: 0, // IMPORTANT: Don't keep any idle connections to prevent proxy disconnects
-  idleTimeout: 30000,
+  maxIdle: 10, // Maintain up to 10 idle connections
+  idleTimeout: 60000, // Close idle connections after 60 seconds explicitly to prevent proxy drops
+  queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
   charset: 'utf8mb4'
@@ -31,17 +32,5 @@ pool.on('error', (err) => {
     console.error('⚠️ [DB Pool] Database connection was refused.');
   }
 });
-
-// Manual Heartbeat: Keep the connection proxy alive every 15 seconds
-setInterval(async () => {
-  try {
-    const connection = await pool.getConnection();
-    await connection.ping();
-    connection.release();
-    console.log('💓 Database Heartbeat: Ping OK');
-  } catch (err) {
-    console.error('💔 Database Heartbeat: FAILED', err.message);
-  }
-}, 15000);
 
 module.exports = pool;
