@@ -11,12 +11,37 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'sistema_gestion_talento',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
+  maxIdle: 0, // IMPORTANT: Don't keep any idle connections to prevent proxy disconnects
+  idleTimeout: 30000,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  idleTimeout: 30000, // Close idle connections proactively
-  maxIdle: 10,
+  keepAliveInitialDelay: 0,
   charset: 'utf8mb4'
 });
+
+// Global Pool Error Logger to prevent server crashes
+pool.on('error', (err) => {
+  console.error('⚠️ [DB Pool] Global Error:', err.message);
+  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+    console.error('⚠️ [DB Pool] Database connection was closed.');
+  }
+  if (err.code === 'ER_CON_COUNT_ERROR') {
+    console.error('⚠️ [DB Pool] Database has too many connections.');
+  }
+  if (err.code === 'ECONNREFUSED') {
+    console.error('⚠️ [DB Pool] Database connection was refused.');
+  }
+});
+
+// Manual Heartbeat: Keep the connection proxy alive every 15 seconds
+setInterval(async () => {
+  try {
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    console.log('💓 Database Heartbeat: Ping OK');
+  } catch (err) {
+    console.error('💔 Database Heartbeat: FAILED', err.message);
+  }
+}, 15000);
 
 module.exports = pool;
