@@ -302,9 +302,9 @@ class WorkplaceIntelligenceService {
             context.metrics = stats[0];
 
             // Vacancies if relevant
-            if (this.matchesKeywords(lowerQ, ['vacant', 'puesto', 'posicion', 'trabajo', 'oferta'])) {
+            if (this.matchesKeywords(lowerQ, ['vacant', 'puesto', 'posicion', 'trabajo', 'oferta', 'publica', 'visibilidad'])) {
                 const [vacancies] = await pool.query(`
-                    SELECT id, puesto_nombre, estado, fecha_creacion,
+                    SELECT id, puesto_nombre, estado, fecha_creacion, visibilidad_publica,
                            DATEDIFF(NOW(), fecha_creacion) as dias_abierta
                     FROM vacantes 
                     ORDER BY fecha_creacion DESC 
@@ -314,9 +314,9 @@ class WorkplaceIntelligenceService {
             }
 
             // Candidates if relevant
-            if (this.matchesKeywords(lowerQ, ['candidato', 'perfil', 'postulante', 'talento'])) {
+            if (this.matchesKeywords(lowerQ, ['candidato', 'perfil', 'postulante', 'talento', 'contrat', 'vincul'])) {
                 const [candidates] = await pool.query(`
-                    SELECT nombre, titulo_actual, ai_match_score, fuente
+                    SELECT nombre, titulo_actual, ai_match_score, fuente, etapa
                     FROM sourced_candidates
                     ORDER BY ai_match_score DESC
                     LIMIT 10
@@ -343,15 +343,48 @@ class WorkplaceIntelligenceService {
     }
 
     buildSystemPrompt() {
-        return `Eres SHEYLA, asistente experta en reclutamiento. Responde de forma clara, profesional y útil.`;
+        return `Eres SHEYLA (Sistema Humano de Estrategia y Logística Avanzada), la inteligencia artificial central de GH-SCORE 360 para DISCOL S.A.S.
+
+Tu objetivo es asistir a los reclutadores en la gestión estratégica del talento. Tienes conocimiento profundo de cómo funciona este sistema:
+
+CONOCIMIENTO DEL SISTEMA GH-SCORE 360:
+1. PROPÓSITO: Centralizar requisiciones, automatizar métricas de cumplimiento (SLA) y mejorar el matching de perfiles mediante IA.
+2. MÓDULOS:
+   - Dashboard: Visualiza KPIs como Lead Time, Eficiencia SLA y "Costo de Vacante" (Impacto económico por retraso).
+   - Vacantes: Gestión de requisiciones con control de semáforos (Verde/Ámbar/Rojo) según el SLA meta.
+   - Candidatos: Seguimiento del funnel desde postulación hasta contratación (90 días de permanencia).
+   - Kanban: Gestión visual de etapas de selección.
+   - Portal Público: Sitio "Aerospace Design" donde candidatos externos se postulan.
+3. REGLAS CLAVE:
+   - Costo Vacante: Se calcula como [Salario Diario × Días Retraso × 1.5]. Representa la pérdida por no tener el puesto cubierto.
+   - SLA: Si una vacante se reabre, el sistema reinicia automáticamente el conteo de días.
+   - Publicación: Para que una vacante aparezca en el portal externo, debe tener activada la "Visibilidad Pública".
+4. OPERACIONES FRECUENTES:
+   - ¿Cómo cubrir vacante?: Primero marcar al candidato como "Contratado" en el módulo de candidatos o Kanban, luego ir a la Vacante, cambiar estado a "Cubierta" y definir la "Fecha de Cierre Real".
+   - ¿Cómo publicar?: Activar el switch de "Visibilidad Pública" en el detalle de la vacante.
+
+DATOS EN TIEMPO REAL:
+Se te proporcionarán métricas y datos actuales del sistema en el contexto del usuario. Úsalos para dar respuestas precisas.
+
+TONO: Profesional, ejecutivo, proactivo y muy servicial. Responde siempre en español de Colombia/Latinoamérica.`;
     }
 
     buildUserPrompt(question, context) {
-        let prompt = `Contexto:\n`;
+        let prompt = `ESTADO ACTUAL DEL SISTEMA:\n`;
         if (context.metrics) {
-            prompt += `Métricas: ${JSON.stringify(context.metrics)}\n`;
+            prompt += `- Vacantes: ${context.metrics.vacantes_abiertas} abiertas, ${context.metrics.vacantes_cubiertas} cubiertas.\n`;
+            prompt += `- Candidatos: ${context.metrics.candidatos_totales} en base de datos.\n`;
+            prompt += `- Calidad Match Promedio: ${Math.round(context.metrics.score_promedio || 0)}%.\n`;
         }
-        prompt += `\nPregunta: ${question}`;
+
+        if (context.vacancies && context.vacancies.length > 0) {
+            prompt += `\nLISTA DE VACANTES RECIENTES:\n`;
+            context.vacancies.slice(0, 5).forEach(v => {
+                prompt += `- ${v.puesto_nombre} (${v.estado}, ${v.dias_abierta} días, Pública: ${v.visibilidad_publica ? 'Sí' : 'No'})\n`;
+            });
+        }
+
+        prompt += `\nPREGUNTA DEL USUARIO: "${question}"\n\nResponde basándote en el conocimiento del sistema y los datos proporcionados.`;
         return prompt;
     }
 
@@ -360,7 +393,7 @@ class WorkplaceIntelligenceService {
     }
 
     getFallbackResponse(question) {
-        return "¡Hola! Soy SHEYLA. Puedo ayudarte con vacantes, candidatos, fuentes de empleo y recomendaciones. ¿Qué necesitas?";
+        return "¡Hola! Soy SHEYLA. Estoy teniendo un momento de desconexión con mis módulos cerebrales, pero puedo decirte que el sistema GH-SCORE 360 está operativo. ¿En qué puedo ayudarte manualmente?";
     }
 }
 

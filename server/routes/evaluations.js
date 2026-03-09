@@ -14,7 +14,7 @@ router.get('/team', verifyToken, requireRole(['Superadmin', 'Admin', 'Lider']), 
             SELECT u.id, u.full_name, u.email, r.name as role_name, u.created_at, u.status
             FROM users u
             JOIN roles r ON u.role_id = r.id
-            WHERE r.name IN ('Reclutador', 'Lider', 'Admin')
+            WHERE r.name = 'Reclutador'
             AND u.status = 'active'
             ORDER BY r.name, u.full_name
         `);

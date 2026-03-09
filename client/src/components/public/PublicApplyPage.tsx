@@ -239,11 +239,8 @@ const PublicApplyPage: React.FC = () => {
             {/* Top bar */}
             <div className="bg-indigo-600/10 border-b border-indigo-500/20 px-4 py-3">
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                            <Briefcase size={14} className="text-white" />
-                        </div>
-                        <span className="text-white font-black text-sm">DISCOL S.A.S.</span>
+                    <div className="flex items-center gap-4">
+                        <img src="/logo_discol.png" alt="DISCOL S.A.S." className="h-4 object-contain" />
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <Shield size={11} className="text-emerald-400" />

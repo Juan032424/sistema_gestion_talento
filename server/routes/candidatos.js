@@ -3,9 +3,13 @@ const router = express.Router();
 const pool = require('../db');
 const activityLogService = require('../services/ActivityLogService');
 const aiService = require('../services/aiService');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const emailService = require('../services/EmailService');
+
+const allowedRoles = ['Superadmin', 'Admin', 'Reclutador', 'Lider'];
 
 // GET all candidatos with vacante info
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const [rows] = await pool.query(`
             SELECT c.*, v.puesto_nombre, v.codigo_requisicion, v.fecha_apertura
@@ -20,7 +24,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET bottleneck analysis
-router.get('/analytics/bottlenecks', async (req, res) => {
+router.get('/analytics/bottlenecks', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const [rows] = await pool.query(`
             SELECT 
@@ -36,7 +40,7 @@ router.get('/analytics/bottlenecks', async (req, res) => {
 });
 
 // GET candidatos for a specific vacante
-router.get('/vacante/:vacanteId', async (req, res) => {
+router.get('/vacante/:vacanteId', verifyToken, requireRole(allowedRoles), async (req, res) => {
     const { vacanteId } = req.params;
     try {
         const [rows] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE vacante_id = ?', [vacanteId]);
@@ -47,7 +51,7 @@ router.get('/vacante/:vacanteId', async (req, res) => {
 });
 
 // GET single candidato (Generic ID must be LAST)
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyToken, requireRole(allowedRoles), async (req, res) => {
     const { id } = req.params;
     try {
         const [rows] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE id = ?', [id]);
@@ -59,7 +63,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST Create Candidato
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador']), async (req, res) => {
     const {
         vacante_id, nombre_candidato, etapa_actual, fuente_reclutamiento,
         salario_pretendido, fecha_entrevista, estado_entrevista,
@@ -104,7 +108,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador']), async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -133,6 +137,49 @@ router.put('/:id', async (req, res) => {
                         [currentRecord.vacante_id, id, updates.etapa_actual]
                     );
                     console.log('NASA Historial: Table updated successfully.');
+
+                    // 📧 NOTIFY LIDER IF HIRED
+                    if (updates.etapa_actual === 'Contratado') {
+                        // 🏆 UPDATE REFERRAL POINTS IF APPLICABLE
+                        try {
+                            const [candidate] = await pool.query('SELECT nombre_candidato, vacante_id FROM candidatos_seguimiento WHERE id = ?', [id]);
+                            if (candidate.length > 0) {
+                                const [refResult] = await pool.query(`
+                                    UPDATE referidos 
+                                    SET status = 'Hired', recruiter_points = recruiter_points + 500 
+                                    WHERE candidate_name = ? AND vacancy_id = ? AND status != 'Hired'
+                                `, [candidate[0].nombre_candidato, candidate[0].vacante_id]);
+
+                                if (refResult.affectedRows > 0) {
+                                    console.log(`🏆 Bonus +500 points awarded for successful referral of ${candidate[0].nombre_candidato}`);
+                                }
+                            }
+                        } catch (refError) {
+                            console.error('⚠️ Could not update referral points:', refError.message);
+                        }
+
+                        try {
+                            const [vacancyDetails] = await pool.query(`
+                                SELECT v.*, u.email as lider_email 
+                                FROM vacantes v 
+                                LEFT JOIN users u ON v.created_by = u.id 
+                                WHERE v.id = ?
+                            `, [currentRecord.vacante_id]);
+
+                            if (vacancyDetails.length > 0 && vacancyDetails[0].lider_email) {
+                                const [candidateRecord] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE id = ?', [id]);
+                                if (candidateRecord.length > 0) {
+                                    await emailService.sendCandidateHiredNotification(
+                                        vacancyDetails[0].lider_email,
+                                        candidateRecord[0],
+                                        vacancyDetails[0]
+                                    );
+                                }
+                            }
+                        } catch (emailError) {
+                            console.error('⚠️ Could not send hire notification:', emailError.message);
+                        }
+                    }
                 }
             } catch (historyError) {
                 console.error('NASA WARNING: History recording failed (but proceeding with main update):', historyError.message);
@@ -209,7 +256,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE Candidato
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador']), async (req, res) => {
     const { id } = req.params;
     try {
         // Find if this candidate has a portal account linked
@@ -234,7 +281,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // GET candidate activity logs
-router.get('/:id/activity', async (req, res) => {
+router.get('/:id/activity', verifyToken, requireRole(allowedRoles), async (req, res) => {
     const { id } = req.params; // ID de candidatos_seguimiento
     try {
         // Encontrar el candidato_id real (de la tabla candidatos) usando email o link
@@ -277,7 +324,7 @@ router.get('/:id/activity', async (req, res) => {
 });
 
 // POST analyze candidate behavior with AI
-router.post('/:id/analyze-behavior', async (req, res) => {
+router.post('/:id/analyze-behavior', verifyToken, requireRole(allowedRoles), async (req, res) => {
     const { id } = req.params;
     try {
         // Encontrar el candidato_id real (reutilizando lógica similar a /activity)

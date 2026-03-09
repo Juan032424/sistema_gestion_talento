@@ -7,7 +7,7 @@ const { verifyToken } = require('../middleware/authMiddleware');
 router.get('/', verifyToken, async (req, res) => {
     try {
         const [rows] = await pool.query(
-            "SELECT id, tipo, titulo, mensaje, leida, created_at as fecha FROM notifications WHERE user_type = 'admin' ORDER BY created_at DESC LIMIT 20"
+            "SELECT id, tipo, titulo, mensaje, metadata, leida, created_at as fecha FROM notifications WHERE user_type = 'admin' ORDER BY created_at DESC LIMIT 20"
         );
         res.json(rows);
     } catch (err) {

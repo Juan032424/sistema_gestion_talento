@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const emailService = require('../services/EmailService');
+
+const allowedRolesRead = ['Superadmin', 'Admin', 'Reclutador', 'Lider'];
+const allowedRolesWrite = ['Superadmin', 'Admin', 'Lider'];
 
 // GET next requisition code
-router.get('/next-code', async (req, res) => {
+router.get('/next-code', verifyToken, requireRole(allowedRolesRead), async (req, res) => {
     try {
         const [rows] = await pool.query("SELECT codigo_requisicion FROM vacantes WHERE codigo_requisicion LIKE 'REQ-%' ORDER BY id DESC LIMIT 1");
 
@@ -24,7 +29,7 @@ router.get('/next-code', async (req, res) => {
 });
 
 // GET all vacantes
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, requireRole(allowedRolesRead), async (req, res) => {
     try {
         const [rows] = await pool.query(`
             SELECT v.*, 
@@ -52,7 +57,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET statistics (Lead Time & KPIs)
-router.get('/stats', async (req, res) => {
+router.get('/stats', verifyToken, requireRole(allowedRolesRead), async (req, res) => {
     try {
         const [vacantes] = await pool.query('SELECT * FROM vacantes');
 
@@ -138,7 +143,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // GET single vacante
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyToken, requireRole(allowedRolesRead), async (req, res) => {
     const { id } = req.params;
     try {
         const [rows] = await pool.query('SELECT * FROM vacantes WHERE id = ?', [id]);
@@ -150,7 +155,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST Create Vacante (Supports Batch)
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, requireRole(allowedRolesWrite), async (req, res) => {
     const {
         codigo_requisicion, puesto_nombre, proceso_id, sede_id,
         fecha_apertura, fecha_cierre_estimada, prioridad,
@@ -206,9 +211,9 @@ router.post('/', async (req, res) => {
 
             const [result] = await pool.query(`
                 INSERT INTO vacantes 
-                (codigo_requisicion, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones, dias_sla_meta, salario_base_ofrecido, costo_final_contratacion)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [currentCode, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base || 0, costo_vacante || 0, observaciones, dias_sla_meta || 15, salario_base_ofrecido || 0, costo_final_contratacion || 0]);
+                (codigo_requisicion, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones, dias_sla_meta, salario_base_ofrecido, costo_final_contratacion, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [currentCode, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base || 0, costo_vacante || 0, observaciones, dias_sla_meta || 15, salario_base_ofrecido || 0, costo_final_contratacion || 0, req.user.id]);
 
             results.push(result.insertId);
 
@@ -240,7 +245,30 @@ router.post('/', async (req, res) => {
                 }
             } catch (publishError) {
                 console.error(`⚠️ Warning: Could not auto-publish vacancy ${currentCode}:`, publishError.message);
-                // Don't fail the entire creation if publish fails
+            }
+
+            // 📧 NOTIFY RECRUITERS
+            try {
+                // Individual validation: Look for the specific email of the assigned responsible
+                const [recruiters] = await pool.query(`
+                    SELECT email FROM users 
+                    WHERE full_name = ? AND tenant_id = ?
+                `, [responsable_rh, req.user.tenantId]);
+
+                if (recruiters.length > 0) {
+                    const vacancyData = {
+                        id: result.insertId,
+                        puesto_nombre,
+                        codigo_requisicion: currentCode,
+                        prioridad,
+                        fecha_apertura
+                    };
+                    await emailService.sendNewVacancyNotification(recruiters, vacancyData, req.user.fullName);
+                } else {
+                    console.log(`ℹ️ No se envió correo: No se encontró usuario con nombre "${responsable_rh}" en esta organización.`);
+                }
+            } catch (emailError) {
+                console.error('⚠️ Could not send recruitment notification:', emailError.message);
             }
         }
 
@@ -256,7 +284,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT Update Vacante
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyToken, requireRole(allowedRolesWrite), async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -396,7 +424,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE Vacante
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, requireRole(allowedRolesWrite), async (req, res) => {
     const { id } = req.params;
     try {
         // 1. Eliminar referencias en el portal público

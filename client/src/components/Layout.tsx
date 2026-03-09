@@ -91,10 +91,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Superadmin', 'Admin', 'Reclutador', 'Lider'] },
         { name: 'Flujo Kanban', path: '/kanban', icon: Layers, roles: ['Superadmin', 'Admin', 'Reclutador', 'Lider'] },
         { name: 'Vacantes', path: '/vacantes', icon: Database, roles: ['Superadmin', 'Admin', 'Reclutador', 'Lider'] },
-        { name: 'Candidatos', path: '/candidatos', icon: Users, roles: ['Superadmin', 'Admin', 'Reclutador'] },
+        { name: 'Candidatos', path: '/candidatos', icon: Users, roles: ['Superadmin', 'Admin', 'Reclutador', 'Lider'] },
         { name: 'AI Hub Agents', path: '/agents', icon: Zap, roles: ['Superadmin'] },
-        { name: 'AI Sourcing', path: '/sourcing', icon: Target, roles: ['Superadmin', 'Admin', 'Reclutador'] },
-        { name: 'Referidos Hub', path: '/referidos', icon: Trophy, roles: ['Superadmin', 'Admin', 'Reclutador'] },
+        { name: 'AI Sourcing', path: '/sourcing', icon: Target, roles: ['Superadmin', 'Admin', 'Reclutador', 'Lider'] },
+        { name: 'Referidos Hub', path: '/referidos', icon: Trophy, roles: ['Superadmin', 'Admin', 'Reclutador', 'Lider'] },
         { name: 'Analíticas', path: '/analytics', icon: LineChart, roles: ['Superadmin', 'Admin', 'Lider'] },
         { name: 'Evaluaciones', path: '/evaluations', icon: ClipboardList, roles: ['Superadmin', 'Admin', 'Lider'] },
         { name: 'Sedes y Empresas', path: '/configuracion', icon: Settings, roles: ['Superadmin', 'Admin'] },
@@ -124,8 +124,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <>
             <div className="p-6 pb-8">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="w-full h-20 flex items-center justify-center p-2 bg-gradient-to-br from-white/10 to-transparent rounded-2xl shadow-xl shadow-black/20 mb-1 backdrop-blur-md border border-white/10">
-                        <img src="/logo_discol.jpg" alt="Discol Logo" className="max-h-full max-w-full object-contain drop-shadow-lg" />
+                    <div className="w-full h-32 bg-black rounded-3xl flex items-center justify-center p-0 mb-6 border border-white/10 shadow-2xl shadow-black/90 overflow-hidden group">
+                        <img src="/logo_discol.png" alt="Discol Logo" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     </div>
                     <h1 className="text-lg font-black tracking-tighter text-white text-center">
                         GH-SCORE <span className="text-[#3a94cc] font-light">PRO</span>

@@ -46,9 +46,6 @@ const LoginPage: React.FC = () => {
                 <div className="absolute bottom-[10%] left-[20%] w-[30%] h-[30%] bg-indigo-500/10 rounded-full blur-[80px]"></div>
 
                 <div className="relative z-10 max-w-lg text-center">
-                    <div className="w-28 h-28 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8 backdrop-blur-xl border border-white/10 shadow-xl shadow-blue-500/10">
-                        <img src="/logo_discol.jpg" alt="Logo DISCOL" className="w-20 h-20 object-contain rounded-xl" />
-                    </div>
                     <h1 className="text-4xl font-black text-white mb-4 tracking-tight">
                         GH-SCORE <span className="text-blue-400 font-light">PRO</span>
                     </h1>
@@ -88,22 +85,27 @@ const LoginPage: React.FC = () => {
                 <div className="w-full max-w-md space-y-8 relative z-10">
                     {/* Mobile logo */}
                     <div className="flex flex-col items-center lg:hidden mb-8">
-                        <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-4 border border-white/10">
-                            <img src="/logo_discol.jpg" alt="Logo" className="w-14 h-14 object-contain rounded-xl" />
+                        <div className="w-48 h-16 bg-white/[0.03] rounded-xl flex items-center justify-center mb-4 border border-white/5">
+                            <img src="/logo_discol.png" alt="Logo" className="max-h-10 w-full object-contain px-4" />
                         </div>
                         <h1 className="text-2xl font-black text-white">GH-SCORE <span className="text-blue-400 font-light">PRO</span></h1>
                     </div>
 
-                    {/* Header */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                                <Shield size={14} className="text-blue-400" />
-                            </div>
-                            <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">Panel Administrativo</span>
+                    {/* Header with New Logo Location */}
+                    <div className="flex flex-col items-center mb-10">
+                        <div className="w-full h-40 bg-black rounded-3xl flex items-center justify-center p-0 mb-8 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden group">
+                            <img src="/logo_discol.png" alt="Logo DISCOL" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         </div>
-                        <h2 className="text-3xl font-black text-white tracking-tight">Iniciar Sesión</h2>
-                        <p className="mt-2 text-gray-500 text-sm">Acceso exclusivo para el equipo de Gestión Humana</p>
+                        <div className="w-full text-left">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                                    <Shield size={14} className="text-blue-400" />
+                                </div>
+                                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">Panel Administrativo</span>
+                            </div>
+                            <h2 className="text-4xl font-black text-white tracking-tight">Iniciar Sesión</h2>
+                            <p className="mt-2 text-gray-500 text-sm">Acceso exclusivo para el equipo de Gestión Humana de DISCOL</p>
+                        </div>
                     </div>
 
                     {/* Error Message */}

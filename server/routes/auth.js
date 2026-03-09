@@ -71,8 +71,8 @@ router.post('/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login Error:', error);
-        res.status(500).json({ error: 'Error del servidor. Intenta de nuevo.' });
+        console.error('Login Error:', error.message);
+        res.status(500).json({ error: error.message || 'Error del servidor. Intenta de nuevo.' });
     }
 });
 

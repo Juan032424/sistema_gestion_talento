@@ -23,7 +23,7 @@ interface User {
     full_name: string;
     email: string;
     role_name: string;
-    is_active: number;
+    status: string;
     created_at: string;
     tenant_name?: string;
 }
@@ -185,10 +185,26 @@ const SuperAdminPanel: React.FC = () => {
         } finally { setConfirmDelete(null); }
     };
 
+    const handleToggleVacanteState = async (v: Vacante) => {
+        if (v.estado !== 'Cubierta') return;
+
+        if (!window.confirm(`¿Estás seguro de reabrir la vacante "${v.puesto_nombre}"?`)) return;
+
+        try {
+            await api.put(`/vacantes/${v.id}`, { estado: 'Abierta', fecha_cierre_real: null });
+            showToast('✅ Vacante reabierta exitosamente', 'success');
+            fetchVacantes();
+            fetchStats();
+        } catch {
+            showToast('Error al reabrir la vacante', 'error');
+        }
+    };
+
     const handleToggleUser = async (u: User) => {
         try {
-            await api.patch(`/users/${u.id}/toggle-status`);
-            showToast(`Usuario ${u.is_active ? 'desactivado' : 'activado'}`, 'success');
+            const newStatus = u.status === 'active' ? 'inactive' : 'active';
+            await api.put(`/users/${u.id}/status`, { status: newStatus });
+            showToast(`Usuario ${newStatus === 'active' ? 'activado' : 'desactivado'}`, 'success');
             fetchUsers();
         } catch {
             showToast('Error al cambiar estado', 'error');
@@ -223,8 +239,7 @@ const SuperAdminPanel: React.FC = () => {
         v.codigo_requisicion?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     const filteredCandidatos = candidatos.filter(c =>
-        c.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        c.nombre_candidato?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -403,10 +418,10 @@ const SuperAdminPanel: React.FC = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${u.is_active
+                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${u.status === 'active'
                                                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                                         : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                                                        {u.is_active ? '● Activo' : '○ Inactivo'}
+                                                        {u.status === 'active' ? '● Activo' : '○ Inactivo'}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -414,10 +429,10 @@ const SuperAdminPanel: React.FC = () => {
                                                         {/* Toggle active */}
                                                         <button
                                                             onClick={() => handleToggleUser(u)}
-                                                            title={u.is_active ? 'Desactivar' : 'Activar'}
+                                                            title={u.status === 'active' ? 'Desactivar' : 'Activar'}
                                                             className="p-1.5 text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all"
                                                         >
-                                                            {u.is_active ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                                                            {u.status === 'active' ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
                                                         </button>
                                                         {/* Edit role */}
                                                         <button
@@ -483,11 +498,16 @@ const SuperAdminPanel: React.FC = () => {
                                                 <td className="px-4 py-3 text-xs font-mono text-gray-500">{v.codigo_requisicion}</td>
                                                 <td className="px-4 py-3 text-sm font-bold text-white">{v.puesto_nombre}</td>
                                                 <td className="px-4 py-3">
-                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${v.estado === 'Abierta'
-                                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                                        : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}`}>
+                                                    <button
+                                                        onClick={() => v.estado === 'Cubierta' ? handleToggleVacanteState(v) : undefined}
+                                                        className={`text-[10px] font-black px-2 py-0.5 rounded-md transition-all ${v.estado === 'Abierta'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                            : 'bg-gray-500/10 text-gray-400 border border-gray-500/20 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 cursor-pointer'
+                                                            }`}
+                                                        title={v.estado === 'Cubierta' ? 'Clic para reabrir la vacante' : ''}
+                                                    >
                                                         {v.estado}
-                                                    </span>
+                                                    </button>
                                                 </td>
                                                 <td className="px-4 py-3 text-xs text-gray-400">{v.responsable_rh || '—'}</td>
                                                 <td className="px-4 py-3">
@@ -541,17 +561,17 @@ const SuperAdminPanel: React.FC = () => {
                                     <tbody className="divide-y divide-white/5">
                                         {filteredCandidatos.map((c: any) => (
                                             <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
-                                                <td className="px-4 py-3 text-sm font-bold text-white">{c.nombre}</td>
-                                                <td className="px-4 py-3 text-xs font-mono text-gray-400">{c.email}</td>
+                                                <td className="px-4 py-3 text-sm font-bold text-white">{c.nombre_candidato}</td>
+                                                <td className="px-4 py-3 text-xs font-mono text-gray-400">{c.fuente_reclutamiento}</td>
                                                 <td className="px-4 py-3">
                                                     <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                        {c.etapa || c.estado || '—'}
+                                                        {c.etapa_actual || '—'}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <button
-                                                            onClick={() => setConfirmDelete({ type: 'candidato', id: c.id, name: c.nombre })}
+                                                            onClick={() => setConfirmDelete({ type: 'candidato', id: c.id, name: c.nombre_candidato })}
                                                             className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                                                             title="Eliminar candidato"
                                                         >

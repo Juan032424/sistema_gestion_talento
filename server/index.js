@@ -16,6 +16,7 @@ const intelligenceRouter = require('./routes/intelligence');
 const applicationsRouter = require('./routes/applications');
 const requestLogger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
+const { verifyToken, requireRole } = require('./middleware/authMiddleware');
 
 // Agent Imports
 const analystAgent = require('./agents/analystAgent');
@@ -57,7 +58,7 @@ app.use('/api/evaluations', require('./routes/evaluations'));
 
 
 // New Agent & Referral Routes
-app.get('/api/agents/logs', async (req, res) => {
+app.get('/api/agents/logs', verifyToken, requireRole(['Superadmin']), async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM agent_logs ORDER BY performed_at DESC LIMIT 50');
         res.json(rows);
@@ -66,10 +67,56 @@ app.get('/api/agents/logs', async (req, res) => {
     }
 });
 
-app.get('/api/referidos', async (req, res) => {
+app.get('/api/referidos', verifyToken, async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM referidos ORDER BY created_at DESC');
-        res.json(rows);
+        const userEmail = req.user.email;
+        const isAdmin = ['Superadmin', 'Admin'].includes(req.user.role);
+
+        let query = 'SELECT * FROM referidos ORDER BY created_at DESC';
+        let params = [];
+
+        if (!isAdmin) {
+            query = 'SELECT * FROM referidos WHERE referrer_email = ? ORDER BY created_at DESC';
+            params = [userEmail];
+        }
+
+        const [rows] = await pool.query(query, params);
+
+        // Calculate stats
+        const stats = {
+            total: rows.length,
+            points: rows.reduce((acc, curr) => acc + (curr.recruiter_points || 0), 0),
+            hired: rows.filter(r => r.status === 'Hired').length
+        };
+
+        // Leaderboard (Top 5 referrers by points)
+        const [leaderboard] = await pool.query(`
+            SELECT referrer_name as name, SUM(recruiter_points) as points 
+            FROM referidos 
+            GROUP BY referrer_email, referrer_name 
+            ORDER BY points DESC 
+            LIMIT 5
+        `);
+
+        res.json({
+            referrals: rows,
+            stats,
+            leaderboard
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/referidos', verifyToken, async (req, res) => {
+    const { candidate_name, candidate_contact, vacancy_id } = req.body;
+    try {
+        const [result] = await pool.query(`
+            INSERT INTO referidos (referrer_name, referrer_email, candidate_name, candidate_contact, vacancy_id, status, recruiter_points)
+            VALUES (?, ?, ?, ?, ?, 'Pending', 100)
+        `, [req.user.fullName, req.user.email, candidate_name, candidate_contact, vacancy_id]);
+
+        res.json({ success: true, id: result.insertId, message: 'Referido registrado con éxito (100 puntos iniciales)' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

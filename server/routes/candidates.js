@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const candidateAccountService = require('../services/candidateAccountService');
 const { authenticateCandidate, requireEmailVerified, optionalCandidateAuth } = require('../middleware/candidateAuth');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const pool = require('../db');
 
 /**
@@ -590,7 +591,7 @@ router.put('/notifications/:id/read', authenticateCandidate, async (req, res) =>
  * GET /api/candidates/portal/all
  * Obtener todos los candidatos registrados en el portal (para admin)
  */
-router.get('/portal/all', async (req, res) => {
+router.get('/portal/all', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador', 'Lider']), async (req, res) => {
     try {
         const [candidates] = await pool.query(`
             SELECT 
@@ -624,7 +625,7 @@ router.get('/portal/all', async (req, res) => {
  * GET /api/candidates/portal/:id
  * Obtener detalle de un candidato del portal
  */
-router.get('/portal/:id', async (req, res) => {
+router.get('/portal/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador', 'Lider']), async (req, res) => {
     try {
         const [candidates] = await pool.query(
             `SELECT * FROM candidatos WHERE id = ?`,

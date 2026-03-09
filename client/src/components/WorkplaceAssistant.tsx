@@ -28,7 +28,7 @@ const WorkplaceAssistant: React.FC = () => {
 
     // Chat State
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', content: 'Hola, soy SHEYLA. Puedo responder preguntas sobre el entorno (vacantes, candidatos) o darte recomendaciones. ¿En qué puedo ayudarte hoy?' }
+        { role: 'assistant', content: '¡Hola! Soy SHEYLA. He sido entrenada con el conocimiento experto de GH-SCORE 360. Puedo resolver tus dudas sobre el sistema, métricas de SLA, gestión de vacantes o darte recomendaciones estratégicas. ¿En qué puedo apoyarte hoy?' }
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);

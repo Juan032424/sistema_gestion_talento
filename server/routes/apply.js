@@ -85,7 +85,7 @@ router.post('/:token', async (req, res) => {
 
         // Verificar vacante
         const [vacantes] = await pool.query(
-            "SELECT id, puesto_nombre, codigo_requisicion, observaciones FROM vacantes WHERE id = ? AND estado = 'Abierta'",
+            "SELECT id, puesto_nombre, codigo_requisicion, observaciones, tenant_id FROM vacantes WHERE id = ? AND estado = 'Abierta'",
             [parseInt(token)]
         );
 
@@ -133,8 +133,9 @@ router.post('/:token', async (req, res) => {
         }
 
         // 3. Insert in candidatos_seguimiento (this is what recruiters see in their dashboard)
+        let seguimientoId = null;
         try {
-            await pool.query(`
+            const [segResult] = await pool.query(`
                 INSERT INTO candidatos_seguimiento (
                     vacante_id, nombre_candidato, etapa_actual, fuente_reclutamiento, 
                     fecha_postulacion, score_tecnico_ia, resumen_ia_entrevista
@@ -142,6 +143,7 @@ router.post('/:token', async (req, res) => {
             `, [
                 vacante.id, nombreCompleto, aiResult.score || 0, JSON.stringify(aiResult.recommendation)
             ]);
+            seguimientoId = segResult.insertId;
         } catch (e) {
             console.log('Skipping seguimiento insert:', e.message);
         }
@@ -164,12 +166,34 @@ router.post('/:token', async (req, res) => {
 
         // 5. Create Notification for Admin
         try {
+            const metadata = {
+                candidate: {
+                    id: seguimientoId,
+                    nombres,
+                    apellidos,
+                    email: emailLower,
+                    telefono,
+                    ciudad: ciudad_residencia,
+                    educacion: nivel_educativo,
+                    experiencia: anos_experiencia,
+                    cargo: cargo_actual,
+                    score: aiResult.score
+                },
+                vacante: {
+                    id: vacante.id,
+                    puesto: vacante.puesto_nombre,
+                    codigo: vacante.codigo_requisicion
+                }
+            };
+
             await pool.query(`
-                INSERT INTO notifications (tipo, titulo, mensaje, user_id)
-                VALUES ('nueva_postulacion', ?, ?, 1)
+                INSERT INTO notifications (tipo, titulo, mensaje, metadata, user_type, user_id, tenant_id)
+                VALUES ('nueva_postulacion', ?, ?, ?, 'admin', 1, ?)
             `, [
                 `Nueva postulación: ${vacante.puesto_nombre}`,
-                `${nombreCompleto} se ha postulado. Score IA: ${aiResult.score}%`
+                `${nombreCompleto} se ha postulado. Score IA: ${aiResult.score}%`,
+                JSON.stringify(metadata),
+                vacante.tenant_id
             ]);
         } catch (e) {
             console.log('Skipping notification:', e.message);

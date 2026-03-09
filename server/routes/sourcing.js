@@ -5,13 +5,16 @@ const sourcingCampaignManager = require('../services/SourcingCampaignManager');
 const jobBoardConnector = require('../services/JobBoardConnector');
 const aiMatchingEngine = require('../services/AIMatchingEngine');
 const colombiaScraper = require('../services/ColombiaJobsScraper');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+
+const allowedRoles = ['Superadmin', 'Admin', 'Reclutador', 'Lider'];
 
 /**
  * POST /api/sourcing/buscar-candidatos
  * Busca candidatos en portales públicos de Colombia (Cartagena preferido)
  * Usa scraping de páginas públicas con axios + cheerio
  */
-router.post('/buscar-candidatos', async (req, res) => {
+router.post('/buscar-candidatos', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const {
             keywords,        // Nombre de la vacante / cargo a buscar
@@ -88,7 +91,7 @@ router.post('/buscar-candidatos', async (req, res) => {
  * GET /api/sourcing/campaigns
  * Get all sourcing campaigns
  */
-router.get('/campaigns', async (req, res) => {
+router.get('/campaigns', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const [campaigns] = await pool.query(`
             SELECT sc.*, v.puesto_nombre, v.codigo_requisicion
@@ -108,7 +111,7 @@ router.get('/campaigns', async (req, res) => {
  * GET /api/sourcing/campaigns/:id
  * Get single campaign with details
  */
-router.get('/campaigns/:id', async (req, res) => {
+router.get('/campaigns/:id', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const stats = await sourcingCampaignManager.getCampaignStats(req.params.id);
         res.json(stats);
@@ -122,7 +125,7 @@ router.get('/campaigns/:id', async (req, res) => {
  * POST /api/sourcing/campaigns
  * Create new sourcing campaign
  */
-router.post('/campaigns', async (req, res) => {
+router.post('/campaigns', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const { vacante_id, nombre, fuentes, filtros, auto_run, schedule } = req.body;
 
@@ -149,7 +152,7 @@ router.post('/campaigns', async (req, res) => {
  * POST /api/sourcing/campaigns/:id/run
  * Run a campaign manually
  */
-router.post('/campaigns/:id/run', async (req, res) => {
+router.post('/campaigns/:id/run', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const result = await sourcingCampaignManager.runCampaign(parseInt(req.params.id));
         res.json(result);
@@ -163,7 +166,7 @@ router.post('/campaigns/:id/run', async (req, res) => {
  * PATCH /api/sourcing/campaigns/:id/pause
  * Pause a campaign
  */
-router.patch('/campaigns/:id/pause', async (req, res) => {
+router.patch('/campaigns/:id/pause', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const result = await sourcingCampaignManager.pauseCampaign(parseInt(req.params.id));
         res.json(result);
@@ -177,7 +180,7 @@ router.patch('/campaigns/:id/pause', async (req, res) => {
  * PATCH /api/sourcing/campaigns/:id/resume
  * Resume a paused campaign
  */
-router.patch('/campaigns/:id/resume', async (req, res) => {
+router.patch('/campaigns/:id/resume', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const result = await sourcingCampaignManager.resumeCampaign(parseInt(req.params.id));
         res.json(result);
@@ -191,7 +194,7 @@ router.patch('/campaigns/:id/resume', async (req, res) => {
  * GET /api/sourcing/campaigns/:id/candidates
  * Get candidates found by a campaign
  */
-router.get('/campaigns/:id/candidates', async (req, res) => {
+router.get('/campaigns/:id/candidates', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const [candidates] = await pool.query(`
             SELECT * FROM sourced_candidates 
@@ -210,7 +213,7 @@ router.get('/campaigns/:id/candidates', async (req, res) => {
  * GET /api/sourcing/sources
  * Get all job board sources and their status
  */
-router.get('/sources', async (req, res) => {
+router.get('/sources', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const [sources] = await pool.query('SELECT * FROM job_board_sources ORDER BY priority ASC');
         const connectorStatus = jobBoardConnector.getSourcesStatus();
@@ -232,7 +235,7 @@ router.get('/sources', async (req, res) => {
  * POST /api/sourcing/search
  * Manual search across job boards (for testing)
  */
-router.post('/search', async (req, res) => {
+router.post('/search', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const { job_description, filters } = req.body;
 
@@ -252,7 +255,7 @@ router.post('/search', async (req, res) => {
  * POST /api/sourcing/score
  * Score a candidate against job requirements
  */
-router.post('/score', async (req, res) => {
+router.post('/score', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const { candidate, job_requirements } = req.body;
 
@@ -272,7 +275,7 @@ router.post('/score', async (req, res) => {
  * GET /api/sourcing/analytics
  * Get overall sourcing analytics
  */
-router.get('/analytics', async (req, res) => {
+router.get('/analytics', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const [totalCampaigns] = await pool.query('SELECT COUNT(*) as count FROM sourcing_campaigns');
         const [activeCampaigns] = await pool.query('SELECT COUNT(*) as count FROM sourcing_campaigns WHERE estado = "active"');
@@ -322,7 +325,7 @@ router.get('/analytics', async (req, res) => {
  * POST /api/sourcing/outreach
  * Generate personalized outreach message
  */
-router.post('/outreach', async (req, res) => {
+router.post('/outreach', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const { candidate, vacancy } = req.body;
 

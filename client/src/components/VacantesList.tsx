@@ -15,8 +15,10 @@ import {
 } from 'lucide-react';
 
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthProvider';
 
 const VacantesList: React.FC = () => {
+    const { user } = useAuth();
     const { showToast } = useToast();
     const navigate = useNavigate();
     const [vacantes, setVacantes] = useState<Vacante[]>([]);
@@ -29,6 +31,8 @@ const VacantesList: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    const canCreateVacancy = user && ['Superadmin', 'Admin', 'Lider'].includes(user.role);
 
     const fetchData = async () => {
         try {
@@ -97,10 +101,12 @@ const VacantesList: React.FC = () => {
                         <Filter size={14} />
                         Filtros
                     </button>
-                    <button onClick={() => navigate('/create-vacante')} className="flex items-center gap-2 px-4 py-2 bg-[#1e4b7a] text-white rounded-xl text-xs font-bold hover:bg-[#3a94cc] transition-all shadow-lg shadow-[#1e4b7a]/20">
-                        <Plus size={14} />
-                        Nueva Vacante
-                    </button>
+                    {canCreateVacancy && (
+                        <button onClick={() => navigate('/create-vacante')} className="flex items-center gap-2 px-4 py-2 bg-[#1e4b7a] text-white rounded-xl text-xs font-bold hover:bg-[#3a94cc] transition-all shadow-lg shadow-[#1e4b7a]/20">
+                            <Plus size={14} />
+                            Nueva Vacante
+                        </button>
+                    )}
                     <button className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-all">
                         <Download size={14} />
                         Exportar
@@ -128,10 +134,10 @@ const VacantesList: React.FC = () => {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {vacantes.map((v) => (
-                                <tr key={v.id} className="hover:bg-white/[0.02] transition-colors group">
-                                    <td className="p-4 font-mono text-xs text-gray-500">{v.codigo_requisicion}</td>
+                                <tr key={v.id} onClick={() => navigate(`/vacantes/${v.id}`)} className="hover:bg-white/[0.05] cursor-pointer transition-colors group">
+                                    <td className="p-4 font-mono text-xs text-gray-400">{v.codigo_requisicion}</td>
                                     <td className="p-4">
-                                        <div className="font-bold text-white text-sm">{v.puesto_nombre}</div>
+                                        <div className="font-bold text-white text-sm group-hover:text-indigo-300 transition-colors">{v.puesto_nombre}</div>
                                     </td>
                                     <td className="p-4">
                                         <span className={cn(
@@ -165,7 +171,7 @@ const VacantesList: React.FC = () => {
                                         <div className="flex items-center justify-end gap-1">
                                             {v.estado === 'Abierta' && (
                                                 <button
-                                                    onClick={() => handleShareLink(v)}
+                                                    onClick={(e) => { e.stopPropagation(); handleShareLink(v); }}
                                                     className="p-2 text-gray-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all"
                                                     title={`Copiar link público: /aplicar/${v.id}`}
                                                 >
@@ -174,7 +180,9 @@ const VacantesList: React.FC = () => {
                                                         : <Share2 size={15} />}
                                                 </button>
                                             )}
-                                            <button onClick={() => handleVacancyEdit(v)} className="p-2 text-gray-600 hover:text-white hover:bg-white/5 rounded-lg transition-all"><Edit2 size={16} /></button>
+                                            {canCreateVacancy && (
+                                                <button onClick={(e) => { e.stopPropagation(); handleVacancyEdit(v); }} className="p-2 text-gray-600 hover:text-white hover:bg-white/5 rounded-lg transition-all"><Edit2 size={16} /></button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

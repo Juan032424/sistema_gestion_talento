@@ -6,6 +6,7 @@ import Kanban from './components/Kanban';
 import VacanteForm from './components/VacanteForm';
 import DataView from './components/DataView';
 import VacantesList from './components/VacantesList';
+import VacanteDetail from './components/v3/VacanteDetail';
 import CandidatosList from './components/CandidatosList';
 import CandidatoForm from './components/CandidatoForm';
 import EmpresaSedeConfig from './components/EmpresaSedeConfig';
@@ -55,6 +56,7 @@ function AppRoutes() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/kanban" element={<Kanban />} />
               <Route path="/vacantes" element={<VacantesList />} />
+              <Route path="/vacantes/:id" element={<VacanteDetail />} />
               <Route path="/candidatos" element={<CandidatosList />} />
               <Route path="/data" element={<DataView />} />
               <Route path="/agents" element={<AIInsightsHub />} />
