@@ -114,7 +114,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ vacancyId, vaca
             document.body.removeChild(el);
         };
 
-        if (navigator.clipboard && window.isSecureContext) {
+        if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(trackingUrl).then(() => {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);

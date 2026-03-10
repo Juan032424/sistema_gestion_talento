@@ -55,12 +55,8 @@ const VacantesList: React.FC = () => {
 
     const handleShareLink = (v: Vacante) => {
         const publicUrl = `${window.location.origin}/aplicar/${v.id}`;
-        navigator.clipboard.writeText(publicUrl).then(() => {
-            setCopiedId(v.id);
-            showToast(`✅ Link copiado: /aplicar/${v.id}`, 'success');
-            setTimeout(() => setCopiedId(null), 3000);
-        }).catch(() => {
-            // Fallback for non-HTTPS
+
+        const fallbackCopy = () => {
             const el = document.createElement('textarea');
             el.value = publicUrl;
             document.body.appendChild(el);
@@ -70,7 +66,17 @@ const VacantesList: React.FC = () => {
             showToast(`Link copiado: ${publicUrl}`, 'success');
             setCopiedId(v.id);
             setTimeout(() => setCopiedId(null), 3000);
-        });
+        };
+
+        if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(publicUrl).then(() => {
+                setCopiedId(v.id);
+                showToast(`✅ Link copiado: /aplicar/${v.id}`, 'success');
+                setTimeout(() => setCopiedId(null), 3000);
+            }).catch(fallbackCopy);
+        } else {
+            fallbackCopy();
+        }
     };
 
     const calculateDesfase = (v: Vacante) => {

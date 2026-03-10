@@ -269,7 +269,7 @@ const AISourcingHub: React.FC = () => {
     };
 
     const copyToClipboard = (text: string) => {
-        if (navigator.clipboard && window.isSecureContext) {
+        if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => {
                 showToast('Copiado al portapapeles', 'success');
             }).catch(() => fallbackCopy(text));
