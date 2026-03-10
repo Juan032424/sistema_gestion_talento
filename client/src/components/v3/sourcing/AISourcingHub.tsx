@@ -269,8 +269,27 @@ const AISourcingHub: React.FC = () => {
     };
 
     const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        showToast('Copiado al portapapeles', 'success');
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copiado al portapapeles', 'success');
+            }).catch(() => fallbackCopy(text));
+        } else {
+            fallbackCopy(text);
+        }
+    };
+
+    const fallbackCopy = (text: string) => {
+        const el = document.createElement('textarea');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        try {
+            document.execCommand('copy');
+            showToast('Copiado al portapapeles', 'success');
+        } catch (err) {
+            showToast('Error al copiar', 'error');
+        }
+        document.body.removeChild(el);
     };
 
     const exportToCSV = (candidatesToExport: ScrapedCandidate[]) => {

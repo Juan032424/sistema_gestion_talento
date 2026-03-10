@@ -99,9 +99,29 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ vacancyId, vaca
     };
 
     const copyTrackingUrl = () => {
-        navigator.clipboard.writeText(trackingUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        const fallbackCopy = () => {
+            const el = document.createElement('textarea');
+            el.value = trackingUrl;
+            document.body.appendChild(el);
+            el.select();
+            try {
+                document.execCommand('copy');
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (err) {
+                console.error('Error al copiar link');
+            }
+            document.body.removeChild(el);
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(trackingUrl).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }).catch(fallbackCopy);
+        } else {
+            fallbackCopy();
+        }
     };
 
     if (success) {
