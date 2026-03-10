@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+    baseURL: import.meta.env.VITE_API_URL || '/api',
 });
 
 // Request interceptor to inject Authorization header
@@ -34,6 +34,15 @@ api.interceptors.response.use(
             || error.response?.data?.error
             || error.message
             || 'Ha ocurrido un error desconocido';
+
+        // Si el token es inválido, ha expirado, o no hay permisos, cerramos sesión automáticamente
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            console.warn('Sesión inválida o expirada. Redirigiendo al login...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('tenant');
+            window.location.href = '/login';
+        }
 
         // You can integrate with ToastNotification here if needed
         // For now, we'll just enhance the error object

@@ -19,7 +19,8 @@ const Kanban: React.FC = () => {
 
     useEffect(() => {
         api.get('/vacantes').then(res => {
-            setVacantes(res.data);
+            const vData = res.data;
+            setVacantes(Array.isArray(vData) ? vData : (vData?.data || []));
             setLoading(false);
         }).catch(err => {
             console.error('Error loading vacantes:', err);

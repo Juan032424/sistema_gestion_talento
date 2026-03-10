@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation, Navigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../api';
 import {
     LayoutDashboard,
@@ -83,9 +83,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     const userRole = user?.role || 'Guest';
 
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
 
     const allMenuItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Superadmin', 'Admin', 'Reclutador', 'Lider'] },

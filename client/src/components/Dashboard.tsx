@@ -33,7 +33,9 @@ const Dashboard: React.FC = () => {
                 api.get('/vacantes')
             ]);
             setStats(statsRes.data);
-            setVacantes(vacantesRes.data);
+
+            const vData = vacantesRes.data;
+            setVacantes(Array.isArray(vData) ? vData : (vData?.data || []));
         } catch (error) {
             console.error("Error fetching data", error);
         } finally {

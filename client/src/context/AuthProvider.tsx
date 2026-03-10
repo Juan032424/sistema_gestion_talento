@@ -23,6 +23,7 @@ interface AuthContextType {
     login: (token: string, userData: User, tenantData: Tenant) => void;
     logout: () => void;
     isAuthenticated: boolean;
+    isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -30,27 +31,66 @@ const AuthContext = createContext<AuthContextType>({
     tenant: null,
     login: () => { },
     logout: () => { },
-    isAuthenticated: false
+    isAuthenticated: false,
+    isLoading: true
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [tenant, setTenant] = useState<Tenant | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Hydrate State from LocalStorage on load
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        const storedTenant = localStorage.getItem('tenant');
-        const token = localStorage.getItem('token');
+        const initializeAuth = () => {
+            const storedUser = localStorage.getItem('user');
+            const storedTenant = localStorage.getItem('tenant');
+            const token = localStorage.getItem('token');
 
-        if (token && storedUser && storedTenant) {
-            setUser(JSON.parse(storedUser));
-            setTenant(JSON.parse(storedTenant));
+            if (token && storedUser && storedTenant) {
+                try {
+                    setUser(JSON.parse(storedUser));
+                    setTenant(JSON.parse(storedTenant));
+                    // Set Default Header
+                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                } catch (e) {
+                    console.error("Error parsing stored auth data", e);
+                    localStorage.clear();
+                }
+            }
+            setIsLoading(false);
+        };
 
-            // Set Default Header
-            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        }
+        initializeAuth();
     }, []);
+
+    // Inactivity Timeout (e.g., 30 minutes)
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout;
+
+        const resetTimer = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            // 10 minutes of inactivity
+            timeoutId = setTimeout(() => {
+                if (localStorage.getItem('token')) {
+                    console.log("Session expired due to inactivity");
+                    logout();
+                }
+            }, 10 * 60 * 1000);
+        };
+
+        if (user) {
+            // Events that count as activity
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+            events.forEach(event => document.addEventListener(event, resetTimer));
+            resetTimer();
+
+            return () => {
+                if (timeoutId) clearTimeout(timeoutId);
+                events.forEach(event => document.removeEventListener(event, resetTimer));
+            };
+        }
+    }, [user]);
 
     const login = (token: string, userData: User, tenantData: Tenant) => {
         localStorage.setItem('token', token);
@@ -89,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, tenant, login, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, tenant, login, logout, isAuthenticated: !!user, isLoading }}>
             {children}
         </AuthContext.Provider>
     );
