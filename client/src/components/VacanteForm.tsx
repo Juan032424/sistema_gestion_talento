@@ -19,6 +19,7 @@ import {
     DollarSign
 } from 'lucide-react';
 import { SectionHeader, PremiumInput, PremiumSelect } from './ui/PremiumComponents';
+import { useToast } from './ToastNotification';
 
 const VacanteForm: React.FC = () => {
     const navigate = useNavigate();
@@ -131,17 +132,28 @@ const VacanteForm: React.FC = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const [submitting, setSubmitting] = useState(false);
+    const { showToast } = useToast();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitting) return;
+
+        setSubmitting(true);
         try {
             if (isEditing) {
                 await api.put(`/vacantes/${id}`, formData);
+                showToast('Vacante actualizada con éxito', 'success');
             } else {
                 await api.post('/vacantes', formData);
+                showToast('Vacante creada con éxito', 'success');
             }
-            navigate('/vacantes');
+            setTimeout(() => {
+                navigate('/vacantes');
+            }, 1000);
         } catch (error: any) {
-            alert(error.response?.data?.error || 'Error al guardar vacante.');
+            showToast(error.response?.data?.error || 'Error al guardar vacante.', 'error');
+            setSubmitting(false);
         }
     };
 
@@ -471,12 +483,13 @@ const VacanteForm: React.FC = () => {
                         </button>
                         <button
                             type="submit"
-                            className="relative overflow-hidden group px-12 py-4 rounded-xl font-bold text-white shadow-2xl transition-all hover:scale-105 active:scale-95"
+                            disabled={submitting}
+                            className={`relative overflow-hidden group px-12 py-4 rounded-xl font-bold text-white shadow-2xl transition-all ${submitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
                         >
                             <div className="absolute inset-0 bg-gradient-to-r from-[#1e4b7a] to-[#3a94cc] transition-all group-hover:scale-110" />
                             <div className="relative flex items-center gap-3">
-                                <Save size={20} className="group-hover:animate-bounce" />
-                                <span>{isEditing ? 'GUARDAR CAMBIOS' : 'REGISTRAR VACANTE'}</span>
+                                {submitting ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Save size={20} className="group-hover:animate-bounce" />}
+                                <span>{submitting ? (isEditing ? 'GUARDANDO...' : 'REGISTRANDO...') : (isEditing ? 'GUARDAR CAMBIOS' : 'REGISTRAR VACANTE')}</span>
                             </div>
                         </button>
                     </div>
