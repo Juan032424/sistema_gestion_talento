@@ -263,7 +263,8 @@ router.post('/', verifyToken, requireRole(allowedRolesWrite), async (req, res) =
                         prioridad,
                         fecha_apertura
                     };
-                    await emailService.sendNewVacancyNotification(recruiters, vacancyData, req.user.fullName);
+                    emailService.sendNewVacancyNotification(recruiters, vacancyData, req.user.fullName)
+                        .catch(e => console.error('Background email error:', e));
                 } else {
                     console.log(`ℹ️ No se envió correo: No se encontró usuario con nombre "${responsable_rh}" en esta organización.`);
                 }
