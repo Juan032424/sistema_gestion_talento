@@ -19,6 +19,13 @@ async function initializeDatabase() {
         connection = await mysql.createConnection(config);
         console.log(`✅ Conectado a ${config.host} como ${config.user}`);
 
+        // Opcional: Para una instalación limpia, forzamos la recreación de la base de datos
+        const dbName = process.env.DB_NAME || 'sistema_gestion_talento';
+        console.log(`🧹 Limpiando base de datos '${dbName}' para instalación nueva...`);
+        await connection.query(`DROP DATABASE IF EXISTS ${dbName};`);
+        await connection.query(`CREATE DATABASE ${dbName};`);
+        await connection.query(`USE ${dbName};`);
+
         const sqlPath = path.join(__dirname, 'DATABASE_MASTER_V3.sql');
         const sql = fs.readFileSync(sqlPath, 'utf8');
 

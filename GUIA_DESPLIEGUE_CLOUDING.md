@@ -50,7 +50,7 @@ apt install git -y
 La forma más fácil es usar Git. Si tienes el código en GitHub (privado), haz un clone:
 
 ```bash
-git clone https://github.com/TU_USUARIO/TU_REPOSITORIO.git /var/www/sheyla
+git clone https://github.com/Juan032424/sistema_gestion_talento /var/www/sheyla
 cd /var/www/sheyla
 ```
 
