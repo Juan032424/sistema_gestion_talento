@@ -1,7 +1,10 @@
 const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
+const path = require('path');
 
-dotenv.config();
+// Use __dirname to always find .env relative to this file's location
+// This works regardless of where PM2 starts the process
+dotenv.config({ path: path.join(__dirname, '.env'), override: true });
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',

@@ -1,5 +1,7 @@
 const dotenv = require('dotenv');
-dotenv.config(); // ⬆️ MUST be FIRST - before any other module that reads process.env
+const path = require('path');
+// Use __dirname + override:true to ALWAYS load from server/.env regardless of PM2's CWD
+dotenv.config({ path: path.join(__dirname, '.env'), override: true });
 
 const express = require('express');
 const cors = require('cors');
