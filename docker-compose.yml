@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # Database Service (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: sheyla-db
+    restart: always
+    environment:
+      # Use variables from .env if available, otherwise defaults
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-admin_pwd}
+      MYSQL_DATABASE: ${DB_NAME:-sistema_gestion_talento}
+      MYSQL_USER: ${DB_USER:-sheyla_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-sheyla_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Automatically initialize the database on first run
+      - ./server/DATABASE_MASTER_V3.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - sheyla-network
+
+  # Backend Service (Node.js API)
+  backend:
+    build: 
+      context: ./server
+    container_name: sheyla-backend
+    restart: always
+    environment:
+      - PORT=3001
+      - DB_HOST=db
+      - DB_USER=${DB_USER:-sheyla_user}
+      - DB_PASSWORD=${DB_PASSWORD:-sheyla_password}
+      - DB_NAME=${DB_NAME:-sistema_gestion_talento}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - CANDIDATE_JWT_SECRET=${CANDIDATE_JWT_SECRET}
+      - GOOGLE_CSE_API_KEY=${GOOGLE_CSE_API_KEY}
+      - GOOGLE_CSE_ID=${GOOGLE_CSE_ID}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - NODE_ENV=production
+    depends_on:
+      - db
+    networks:
+      - sheyla-network
+
+  # Frontend Service (Nginx serving React)
+  frontend:
+    build:
+      context: ./client
+      args:
+        # The frontend will always use relative paths through Nginx proxy
+        - VITE_API_URL=/api
+    container_name: sheyla-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - sheyla-network
+
+# Use named volumes for persistent data
+volumes:
+  db_data:
+
+# Use a dedicated network for internal communication
+networks:
+  sheyla-network:
+    driver: bridge

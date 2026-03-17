@@ -3,10 +3,10 @@ import { ChevronRight } from 'lucide-react';
 
 export const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: string, color: string }) => (
     <div className={`flex items-center gap-3 ${color} mb-4`}>
-        <div className="p-2 bg-white/5 rounded-lg backdrop-blur-sm shadow-inner">
+        <div className="p-2 bg-white/5 rounded-lg backdrop-blur-sm shadow-inner" style={{ backgroundColor: 'var(--sidebar-hover-bg)' }}>
             {React.cloneElement(icon as React.ReactElement<any>, { size: 18 })}
         </div>
-        <h3 className="text-sm font-black uppercase tracking-widest text-white/90">{title}</h3>
+        <h3 className="text-sm font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>{title}</h3>
     </div>
 );
 

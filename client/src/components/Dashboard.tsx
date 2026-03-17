@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
     if (loading) return (
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
             <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-            <p className="text-gray-500 font-medium animate-pulse">Cargando métricas de talento...</p>
+            <p className="font-medium animate-pulse" style={{ color: 'var(--text-muted)' }}>Cargando métricas de talento...</p>
         </div>
     );
 
@@ -96,8 +96,8 @@ const Dashboard: React.FC = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-extrabold text-white tracking-tight">Análisis de Reclutamiento</h2>
-                    <p className="text-gray-500 mt-1 font-medium italic">Estado de la gestión humana al {new Date().toLocaleDateString()}</p>
+                    <h2 className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>Análisis de Reclutamiento</h2>
+                    <p className="mt-1 font-medium italic" style={{ color: 'var(--text-muted)' }}>Estado de la gestión humana al {new Date().toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm font-semibold bg-blue-500/10 text-blue-500 px-4 py-2 rounded-full border border-blue-500/20">
                     <TrendingUp size={16} />
@@ -140,26 +140,26 @@ const Dashboard: React.FC = () => {
                     isAlert={Boolean(stats?.expiredCount && stats.expiredCount > 0)}
                     description="Vacantes que han superado su fecha límite de contratación."
                 />
-                <div className="stat-card bg-indigo-600/5 border-indigo-500/20 group relative overflow-hidden">
+                <div className="stat-card bg-[#1e4b7a]/5 group relative overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Bot size={60} />
+                        <Bot size={60} style={{ color: 'var(--text-secondary)' }} />
                     </div>
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest text-[#3a94cc]">IA Agents Status</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-[#3a94cc]">IA Agents Status</span>
                         <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-transform">
                             <Zap size={22} />
                         </div>
                     </div>
                     <div className="space-y-3">
                         <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span className="text-slate-400">ANALYTIC AGENT</span>
+                            <span style={{ color: 'var(--text-muted)' }}>ANALYTIC AGENT</span>
                             <span className="text-emerald-400">ACTIVE</span>
                         </div>
                         <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />
                         </div>
                         <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span className="text-slate-400">SOURCING AGENT</span>
+                            <span style={{ color: 'var(--text-muted)' }}>SOURCING AGENT</span>
                             <span className="text-blue-400">SCANNING</span>
                         </div>
                         <div className="h-1 bg-white/5 rounded-full overflow-hidden">
@@ -172,38 +172,38 @@ const Dashboard: React.FC = () => {
             {/* Smart Insights Section */}
             < div className="grid grid-cols-1 md:grid-cols-3 gap-6" >
                 {(stats as any)?.expiredCount > 0 && (
-                    <div className="bg-red-500/5 border border-red-500/20 p-6 rounded-3xl flex items-start gap-4">
+                    <div className="p-6 rounded-3xl flex items-start gap-4 border" style={{ backgroundColor: 'var(--bg-panel)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
                         <div className="p-3 bg-red-500/20 rounded-2xl text-red-500">
                             <AlertCircle size={24} />
                         </div>
                         <div>
-                            <h4 className="text-white font-bold mb-1 uppercase text-xs tracking-widest">Alerta de Crítica</h4>
-                            <p className="text-gray-400 text-xs leading-relaxed">
+                            <h4 className="font-bold mb-1 uppercase text-xs tracking-widest" style={{ color: 'var(--text-primary)' }}>Alerta de Crítica</h4>
+                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                                 Hay <span className="text-red-400 font-bold">{(stats as any).expiredCount} vacantes</span> que superaron el SLA.
                                 El costo de oportunidad actual suma <span className="text-red-400 font-bold">${new Intl.NumberFormat().format((stats as any).totalFinancialImpact)}</span>.
                             </p>
                         </div>
                     </div>
                 )}
-                <div className="bg-blue-500/5 border border-blue-500/20 p-6 rounded-3xl flex items-start gap-4">
+                <div className="p-6 rounded-3xl flex items-start gap-4 border" style={{ backgroundColor: 'var(--bg-panel)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
                     <div className="p-3 bg-blue-500/20 rounded-2xl text-blue-500">
                         <Lightbulb size={24} />
                     </div>
                     <div>
-                        <h4 className="text-white font-bold mb-1 uppercase text-xs tracking-widest">Insight de Gestión</h4>
-                        <p className="text-gray-400 text-xs leading-relaxed">
+                        <h4 className="font-bold mb-1 uppercase text-xs tracking-widest" style={{ color: 'var(--text-primary)' }}>Insight de Gestión</h4>
+                        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                             El tiempo promedio de cierre actual es de <span className="text-blue-400 font-bold">{stats?.avgLeadTime} días</span>.
                             Una reducción del 10% ahorraría aprox. <span className="text-green-400 font-bold">$4.2M</span> mensuales.
                         </p>
                     </div>
                 </div>
-                <div className="bg-purple-500/5 border border-purple-500/20 p-6 rounded-3xl flex items-start gap-4">
+                <div className="p-6 rounded-3xl flex items-start gap-4 border" style={{ backgroundColor: 'var(--bg-panel)', borderColor: 'rgba(139, 92, 246, 0.2)' }}>
                     <div className="p-3 bg-purple-500/20 rounded-2xl text-purple-500">
                         <Zap size={24} />
                     </div>
                     <div>
-                        <h4 className="text-white font-bold mb-1 uppercase text-xs tracking-widest">Recomendación</h4>
-                        <p className="text-gray-400 text-xs leading-relaxed">
+                        <h4 className="font-bold mb-1 uppercase text-xs tracking-widest" style={{ color: 'var(--text-primary)' }}>Recomendación</h4>
+                        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                             La sede <span className="text-purple-400 font-bold">{(stats as any)?.geoDistribution?.[0]?.sede || 'Principal'}</span> concentra el mayor volumen.
                             Considerar priorizar recursos de apoyo para esta ubicación.
                         </p>
@@ -248,8 +248,8 @@ const Dashboard: React.FC = () => {
                             }}
                         />
                         <div className="absolute flex flex-col items-center pointer-events-none mb-10">
-                            <span className="text-4xl font-extrabold text-white">{vacantes.length}</span>
-                            <span className="text-[10px] uppercase text-gray-500 font-bold tracking-widest">Total</span>
+                            <span className="text-4xl font-extrabold" style={{ color: 'var(--text-primary)' }}>{vacantes.length}</span>
+                            <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--text-muted)' }}>Total</span>
                         </div>
                     </div>
                 </div>
@@ -259,8 +259,8 @@ const Dashboard: React.FC = () => {
             < div className="stat-card" >
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h3 className="text-lg font-bold">Carga de Reclutamiento por Sede</h3>
-                        <p className="text-xs text-gray-500 mt-1">Comparativa de procesos abiertos vs asignación</p>
+                        <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Carga de Reclutamiento por Sede</h3>
+                        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Comparativa de procesos abiertos vs asignación</p>
                     </div>
                     <button className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold transition-all">
                         Ver todo el historial
@@ -282,8 +282,8 @@ const Dashboard: React.FC = () => {
                                 <tr key={v.id} className="group hover:bg-white/[0.02] transition-colors">
                                     <td className="py-5 px-2">
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors uppercase tracking-tight">{v.puesto_nombre}</span>
-                                            <span className="text-[11px] text-gray-500 mt-0.5">{v.sede_nombre}</span>
+                                            <span className="text-sm font-semibold group-hover:text-blue-400 transition-colors uppercase tracking-tight" style={{ color: 'var(--text-primary)' }}>{v.puesto_nombre}</span>
+                                            <span className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{v.sede_nombre}</span>
                                         </div>
                                     </td>
                                     <td className="py-5">
@@ -291,7 +291,7 @@ const Dashboard: React.FC = () => {
                                             <div className="w-6 h-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-[10px] font-bold text-indigo-400">
                                                 {(v.responsable_rh || 'U').substring(0, 1)}
                                             </div>
-                                            <span className="text-xs text-gray-300">{v.responsable_rh}</span>
+                                            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{v.responsable_rh}</span>
                                         </div>
                                     </td>
                                     <td className="py-5">
@@ -303,7 +303,7 @@ const Dashboard: React.FC = () => {
                                         </span>
                                     </td>
                                     <td className="py-5">
-                                        <span className="text-xs font-mono text-gray-400">
+                                        <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
                                             ${new Intl.NumberFormat().format(v.presupuesto_aprobado || 0)}
                                         </span>
                                     </td>
@@ -356,8 +356,8 @@ const KpiCard: React.FC<{ title: string, value: string | number, icon: React.Rea
                 </div>
             </div>
             <div>
-                <h3 className="text-3xl font-black text-white">{value}</h3>
-                <p className={cn("text-[10px] mt-2 font-semibold", isAlert ? "text-red-400" : "text-gray-500 uppercase tracking-tighter")}>{trend}</p>
+                <h3 className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>{value}</h3>
+                <p className={cn("text-[10px] mt-2 font-semibold", isAlert ? "text-red-400" : "")} style={{ color: isAlert ? undefined : 'var(--text-muted)' }}>{trend}</p>
             </div>
         </div>
     );

@@ -160,20 +160,33 @@ router.put('/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador'
 
                         try {
                             const [vacancyDetails] = await pool.query(`
-                                SELECT v.*, u.email as lider_email 
+                                SELECT v.*, 
+                                       u.email as lider_email,
+                                       r.email as recruiter_email
                                 FROM vacantes v 
                                 LEFT JOIN users u ON v.created_by = u.id 
+                                LEFT JOIN users r ON v.responsable_rh = r.full_name AND v.tenant_id = r.tenant_id
                                 WHERE v.id = ?
                             `, [currentRecord.vacante_id]);
 
-                            if (vacancyDetails.length > 0 && vacancyDetails[0].lider_email) {
-                                const [candidateRecord] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE id = ?', [id]);
-                                if (candidateRecord.length > 0) {
-                                    await emailService.sendCandidateHiredNotification(
-                                        vacancyDetails[0].lider_email,
-                                        candidateRecord[0],
-                                        vacancyDetails[0]
-                                    );
+                            if (vacancyDetails.length > 0) {
+                                const v = vacancyDetails[0];
+                                // Prepare recipients: Leader AND/OR Recruiter
+                                const recipients = [v.lider_email, v.recruiter_email].filter(email => email);
+                                const emailList = [...new Set(recipients)].join(', ');
+
+                                if (emailList) {
+                                    const [candidateRecord] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE id = ?', [id]);
+                                    if (candidateRecord.length > 0) {
+                                        console.log(`📧 Enviando notificación de contratación a: ${emailList}`);
+                                        await emailService.sendCandidateHiredNotification(
+                                            emailList,
+                                            candidateRecord[0],
+                                            v
+                                        );
+                                    }
+                                } else {
+                                    console.warn(`⚠️ No se pudo enviar notificación de contratación: No se encontró email para el líder (${v.created_by}) ni para el reclutador (${v.responsable_rh})`);
                                 }
                             }
                         } catch (emailError) {

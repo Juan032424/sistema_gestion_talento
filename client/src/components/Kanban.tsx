@@ -78,7 +78,7 @@ const Kanban: React.FC = () => {
 
             // Optimistic update
             const updatedVacantes = vacantes.map(v =>
-                v.id === vacante.id ? { ...v, estado: newStatus } : v
+                v.id === vacante.id ? { ...v, estado: newStatus as any } : v
             );
             setVacantes(updatedVacantes); // Immediate UI feedback
 
@@ -97,7 +97,7 @@ const Kanban: React.FC = () => {
     return (
         <div className="flex flex-col h-[calc(100vh-180px)] overflow-hidden">
             <div className="flex justify-between items-center mb-4 px-2">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                     <Layers className="text-[#3a94cc]" />
                     Tablero de Gestión
                 </h2>
@@ -114,9 +114,9 @@ const Kanban: React.FC = () => {
                         <div className="flex items-center justify-between mb-5 px-2">
                             <div className="flex items-center gap-2">
                                 <div className={cn("w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]", col.status === 'Abierta' ? "bg-blue-500 text-blue-500" : col.status === 'Cubierta' ? "bg-green-500 text-green-500" : "bg-purple-500 text-purple-500")} />
-                                <h3 className="font-bold text-sm tracking-tight text-white uppercase">{col.title}</h3>
+                                <h3 className="font-bold text-sm tracking-tight uppercase" style={{ color: 'var(--text-primary)' }}>{col.title}</h3>
                             </div>
-                            <span className="bg-[#161b22] text-gray-500 text-[10px] font-black px-2 py-0.5 rounded-full border border-white/5 shadow-inner">
+                            <span className="bg-[#161b22] text-gray-500 text-[10px] font-black px-2 py-0.5 rounded-full border border-white/5 shadow-inner" style={{ backgroundColor: 'var(--bg-panel)', color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }}>
                                 {vacantes.filter(v => v.estado === col.status).length}
                             </span>
                         </div>
@@ -125,7 +125,7 @@ const Kanban: React.FC = () => {
                             {vacantes.filter(v => v.estado === col.status).map(v => (
                                 <div
                                     key={v.id}
-                                    className="kanban-card group/card relative block hover:ring-1 hover:ring-[#3a94cc]/50 transition-all cursor-default overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
+                                    className="kanban-card group/card relative block"
                                 >
                                     {/* Quick Actions Overlay (Visible on Hover) */}
                                     <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover/card:opacity-100 transition-opacity">

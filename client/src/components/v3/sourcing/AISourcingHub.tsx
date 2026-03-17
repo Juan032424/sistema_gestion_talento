@@ -366,7 +366,7 @@ const AISourcingHub: React.FC = () => {
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Ciudad 📍</label>
                                 <select value={searchCity} onChange={(e) => setSearchCity(e.target.value)} className="w-full bg-[#0a0c10] border border-white/8 rounded-xl px-4 py-3 text-white text-sm">
-                                    <option value="Cartagena">Cartagena ⭐</option>
+                                    <option value="Cartagena">Cartagena</option>
                                     <option value="Barranquilla">Barranquilla</option>
                                     <option value="Bogotá">Bogotá</option>
                                     <option value="Medellín">Medellín</option>

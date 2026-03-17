@@ -18,8 +18,12 @@ import {
     Shield,
     ClipboardList,
     Menu,
-    X
+    X,
+    Sun,
+    Moon
 } from 'lucide-react';
+
+import { useTheme } from '../context/ThemeContext';
 
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthProvider';
@@ -30,6 +34,7 @@ import AdminNotificationPanel from './AdminNotificationPanel';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const location = useLocation();
     const [searchTerm, setSearchTerm] = React.useState('');
     const [searchResults, setSearchResults] = React.useState<any[]>([]);
@@ -119,20 +124,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     const SidebarContent = () => (
         <>
-            <div className="p-6 pb-8">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-full h-32 bg-black rounded-3xl flex items-center justify-center p-0 mb-6 border border-white/10 shadow-2xl shadow-black/90 overflow-hidden group">
-                        <img src="/logo_discol.png" alt="Discol Logo" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            <div className="p-4 pt-5 pb-3">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="w-full h-20 rounded-2xl flex items-center justify-center p-0 mb-3 border border-white/10 shadow-lg overflow-hidden group" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000', borderColor: 'var(--border-color)' }}>
+                        <img src="/logo_discol.png" alt="Discol Logo" className="w-full h-full object-contain px-4 transition-transform duration-700 group-hover:scale-110" />
                     </div>
-                    <h1 className="text-lg font-black tracking-tighter text-white text-center">
+                    <h1 className="text-sm font-black tracking-tighter text-white text-center">
                         GH-SCORE <span className="text-[#3a94cc] font-light">PRO</span>
-                        <span className="block text-[9px] text-gray-500 font-normal tracking-widest mt-1">GLOBAL TALENT SUITE</span>
+                        <span className="block text-[7px] text-gray-500 font-normal tracking-widest mt-0.5">GLOBAL TALENT SUITE</span>
                     </h1>
                 </div>
             </div>
 
-            <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4 px-4 flex items-center justify-between">
+            <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar min-h-0">
+                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-3 px-4 flex items-center justify-between">
                     <span>Gestión de Talento</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" title="System Online"></span>
                 </div>
@@ -154,43 +159,41 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </Link>
                     );
                 })}
-
-                <div className="mt-6 mx-2 p-4 rounded-2xl bg-gradient-to-br from-[#161b22] to-[#0d1117] border border-white/5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-2 opacity-50">
-                        <Users size={48} className="text-white/5 -rotate-12" />
-                    </div>
-                    <div className="relative z-10">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-[10px] font-bold uppercase text-[#3a94cc] tracking-widest">Nivel 4</span>
-                            <span className="text-[10px] text-gray-400 font-mono">2,450 XP</span>
-                        </div>
-                        <h4 className="text-sm font-bold text-white mb-3">Master Recruiter</h4>
-                        <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                            <div className="h-full w-[75%] bg-gradient-to-r from-[#3a94cc] to-blue-400 rounded-full" />
-                        </div>
-                        <p className="text-[10px] text-gray-500 mt-2">Faltan 5 vacantes para subir de nivel.</p>
-                    </div>
-                </div>
             </nav>
 
-            <div className="p-4 border-t border-white/5 space-y-3 bg-[#0a0c10]/50 backdrop-blur-sm">
-                <div className="flex items-center gap-3 px-2 py-2">
+            <div className="p-4 pt-2 border-t border-white/5 space-y-3 bg-white/[0.02] backdrop-blur-sm" style={{ backgroundColor: 'var(--bg-panel)' }}>
+                <div className="mx-0 p-2.5 rounded-xl bg-gradient-to-br from-[#161b22] to-[#0d1117] border border-white/5 relative overflow-hidden hidden md:block">
+                    <div className="absolute top-0 right-0 p-1.5 opacity-30">
+                        <Users size={24} className="text-white/5 -rotate-12" />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-[8px] font-black uppercase text-[#3a94cc] tracking-widest">Nivel 4</span>
+                            <span className="text-[8px] text-gray-400 font-mono">2.4k XP</span>
+                        </div>
+                        <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-full w-[75%] bg-gradient-to-r from-[#3a94cc] to-blue-400 rounded-full" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 px-1 py-0.5">
                     <div className="relative shrink-0">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold ring-2 ring-white/10">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-[10px] font-bold ring-2 ring-white/10 shadow-lg shadow-blue-900/40">
                             {getUserInitials()}
                         </div>
-                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#0d1117] rounded-full"></div>
+                        <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border rounded-full" style={{ borderColor: 'var(--bg-sidebar)' }}></div>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white truncate leading-none">{user?.fullName || 'Admin Usuario'}</p>
-                        <p className="text-[10px] text-[#3a94cc] mt-1 font-medium">{user?.role || 'Global Admin'}</p>
+                        <p className="text-[11px] font-bold text-white truncate leading-none">{user?.fullName || 'Admin'}</p>
+                        <p className="text-[9px] text-[#3a94cc] mt-0.5 font-medium">{user?.role || 'Admin'}</p>
                     </div>
                     <button
                         onClick={handleLogout}
                         title="Cerrar Sesión"
-                        className="text-gray-500 hover:text-red-400 transition-colors p-1.5 hover:bg-white/5 rounded-lg shrink-0"
+                        className="text-gray-500 hover:text-red-400 transition-colors p-1.5 hover:bg-white/5 rounded-lg shrink-0 border border-white/5"
                     >
-                        <LogOut size={16} />
+                        <LogOut size={14} />
                     </button>
                 </div>
             </div>
@@ -198,7 +201,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
 
     return (
-        <div className="flex h-screen bg-[#0a0c10] text-[#e6edf3] font-sans selection:bg-blue-500/30 overflow-hidden">
+        <div className="flex h-screen bg-main text-primary-text font-sans selection:bg-blue-500/30 overflow-hidden" style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}>
 
             {/* Mobile Overlay */}
             {sidebarOpen && (
@@ -210,9 +213,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             {/* Sidebar — hidden on mobile, shown via overlay */}
             <aside className={cn(
-                "fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-[#0d1117] border-r border-white/5 flex flex-col no-print transition-transform duration-300",
+                "fixed lg:relative inset-y-0 left-0 z-50 w-64 border-r transition-transform duration-300 flex flex-col h-full",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-            )}>
+            )} style={{ backgroundColor: 'var(--bg-sidebar)', borderColor: 'var(--border-color)' }}>
                 <SidebarContent />
             </aside>
 
@@ -224,7 +227,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <NavigationBanner />
 
                 {/* Top Navbar */}
-                <header className="h-16 bg-[#0a0c10]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 md:px-8 no-print sticky top-0 z-40 gap-3">
+                <header className="h-16 backdrop-blur-xl border-b flex items-center justify-between px-4 md:px-8 no-print sticky top-0 z-40 gap-3" style={{ backgroundColor: 'var(--bg-main)', borderColor: 'var(--border-color)', opacity: 0.9 }}>
 
                     {/* Hamburger button — visible on mobile only */}
                     <button
@@ -236,7 +239,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
                     {/* Search Bar */}
                     <div className="relative group flex-1 max-w-lg">
-                        <div className="flex items-center bg-[#161b22]/50 border border-white/5 rounded-xl px-3 py-2 w-full group-focus-within:border-[#3a94cc]/50 group-focus-within:bg-[#161b22] transition-all duration-300">
+                        <div className="flex items-center border rounded-xl px-3 py-2 w-full group-focus-within:border-[#3a94cc]/50 transition-all duration-300" style={{ backgroundColor: 'var(--bg-panel)', borderColor: 'var(--border-color)' }}>
                             <Search size={16} className={cn("text-gray-500 group-focus-within:text-[#3a94cc] transition-colors shrink-0", isSearching && "animate-pulse")} />
                             <input
                                 type="text"
@@ -244,7 +247,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onFocus={() => searchTerm.length >= 2 && setShowDropdown(true)}
-                                className="bg-transparent border-none outline-none ml-2 text-sm w-full placeholder:text-gray-600 text-white min-w-0"
+                                className="bg-transparent border-none outline-none ml-2 text-sm w-full placeholder:text-gray-600 min-w-0"
+                                style={{ color: 'var(--text-primary)' }}
                             />
                         </div>
 
@@ -300,8 +304,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                 <Bell size={17} />
                                 {unreadNotifications > 0 && (
                                     <>
-                                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#161b22] animate-ping" />
-                                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#161b22]" />
+                                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
                                     </>
                                 )}
                             </button>
@@ -313,6 +317,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                 />
                             )}
                         </div>
+
+                        {/* Theme Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl transition-all border border-white/5 text-gray-400 hover:text-white hover:bg-white/5"
+                            style={{ backgroundColor: 'var(--bg-panel)', color: 'var(--text-secondary)' }}
+                            title={theme === 'dark' ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                        >
+                            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+                        </button>
 
                         <button className="hidden md:block px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 border border-white/10 text-xs font-bold text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all">
                             Exportar
