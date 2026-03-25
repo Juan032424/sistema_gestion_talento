@@ -10,9 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@raulcifuentes/municipios-colombia": "^1.1.0",
     "axios": "^1.13.3",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
+    "colombia-cities": "^1.0.0",
+    "colombia-data-social": "^1.0.1",
     "framer-motion": "^12.34.4",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",

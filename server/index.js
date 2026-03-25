@@ -32,6 +32,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Servir archivos estáticos de uploads
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
 // Logger Middleware
 app.use(requestLogger);
 

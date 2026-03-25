@@ -277,8 +277,8 @@ router.delete('/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutad
 
         if (candidate.length > 0) {
             // Optional: delete matching logic in applications / history if needed
-            await pool.query('DELETE FROM historial_etapas WHERE candidato_id = ?', [id]);
-            await pool.query('DELETE FROM ai_evaluations WHERE candidate_id = ?', [id]);
+            await pool.query('DELETE FROM historial_etapas WHERE candidato_id = ?', [id]).catch(e => console.log('historial deletion missing table/ref', e.message));
+            await pool.query('DELETE FROM ai_evaluations WHERE candidate_id = ?', [id]).catch(e => console.log('ai_evaluations deletion missing table/ref', e.message));
         }
 
         const [result] = await pool.query('DELETE FROM candidatos_seguimiento WHERE id = ?', [id]);

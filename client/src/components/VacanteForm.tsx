@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import api from '../api';
 import {
     ChevronLeft,
@@ -25,6 +26,7 @@ const VacanteForm: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const isEditing = Boolean(id);
+    const { theme } = useTheme();
 
     const [sedes, setSedes] = useState<any[]>([]);
     const [procesos, setProcesos] = useState<any[]>([]);
@@ -59,6 +61,7 @@ const VacanteForm: React.FC = () => {
         costo_dia_vacante: '',
         presupuesto_max: '',
         salario_pactado: '',
+        costo_examenes_medicos: '',
         // Edit only fields
         estado: 'Abierta',
         fecha_cierre_real: '',
@@ -175,8 +178,8 @@ const VacanteForm: React.FC = () => {
                         </h2>
                         <p className="text-white/70 text-sm mt-1 font-medium">Define la estructura y ubicación estratégica de la vacante</p>
                     </div>
-                    <div className="w-20 h-20 bg-white rounded-xl p-2 shadow-lg hidden sm:block rotate-3 hover:rotate-6 transition-transform duration-500">
-                        <img src="/logo_discol.png" alt="Logo" className="w-full h-full object-contain scale-125" />
+                    <div className="w-20 h-20 bg-white rounded-xl p-2 shadow-lg hidden sm:block rotate-3 hover:rotate-6 transition-transform duration-500" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000' }}>
+                        <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Logo" className="w-full h-full object-contain scale-125" />
                     </div>
                 </div>
 
@@ -416,7 +419,7 @@ const VacanteForm: React.FC = () => {
                         </div>
 
                         {/* Row 3: Costos y SLA */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                             <PremiumInput
                                 label="Costo Vacante ($)"
                                 name="costo_vacante"
@@ -439,6 +442,14 @@ const VacanteForm: React.FC = () => {
                                 value={formData.dias_sla_meta}
                                 onChange={handleChange}
                                 icon={<Clock size={16} />}
+                            />
+                            <PremiumInput
+                                label="Costo Exámenes Médicos ($)"
+                                name="costo_examenes_medicos"
+                                type="number"
+                                value={formData.costo_examenes_medicos || ''}
+                                onChange={handleChange}
+                                icon={<DollarSign size={16} />}
                             />
                         </div>
 

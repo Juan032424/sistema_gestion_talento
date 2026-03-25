@@ -6,6 +6,9 @@ import {
     CheckCircle2, AlertCircle, Send, ChevronRight,
     Star, Shield, FileText, Globe, Loader2
 } from 'lucide-react';
+// @ts-ignore
+import * as colombiaUtils from 'colombia-cities';
+import { useTheme } from '../../context/ThemeContext';
 
 
 interface VacancyPublic {
@@ -22,11 +25,13 @@ interface VacancyPublic {
     empresa: string;
 }
 
-interface FormData {
+interface ApplicationForm {
+    cedula: string;
     nombres: string;
     apellidos: string;
     email: string;
     telefono: string;
+    departamento_residencia: string;
     ciudad_residencia: string;
     nivel_educativo: string;
     anos_experiencia: string;
@@ -35,6 +40,7 @@ interface FormData {
     mensaje: string;
     como_se_entero: string;
     acepta_terminos: boolean;
+    cv_file: File | null;
 }
 
 const NIVELES_EDUCATIVOS = [
@@ -64,26 +70,47 @@ const PublicApplyPage: React.FC = () => {
     const [vacancy, setVacancy] = useState<VacancyPublic | null>(null);
     const [loadingVacancy, setLoadingVacancy] = useState(true);
     const [vacancyError, setVacancyError] = useState('');
+    const { theme } = useTheme();
 
-    const [form, setForm] = useState<FormData>({
+    const [form, setForm] = useState<ApplicationForm>({
+        cedula: '',
         nombres: '',
         apellidos: '',
         email: '',
         telefono: '',
-        ciudad_residencia: 'Cartagena',
+        departamento_residencia: '',
+        ciudad_residencia: '',
         nivel_educativo: '',
         anos_experiencia: '',
         cargo_actual: '',
         empresa_actual: '',
         mensaje: '',
         como_se_entero: '',
-        acepta_terminos: false
+        acepta_terminos: false,
+        cv_file: null
     });
 
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [submitError, setSubmitError] = useState('');
-    const [errors, setErrors] = useState<Partial<FormData>>({});
+    const [errors, setErrors] = useState<Partial<ApplicationForm>>({});
+
+    const departamentos = React.useMemo(() => {
+        try {
+            return colombiaUtils.getDepartments().sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
+        } catch (e) {
+            return [];
+        }
+    }, []);
+
+    const ciudades = React.useMemo(() => {
+        if (!form.departamento_residencia) return [];
+        try {
+            return colombiaUtils.getCitiesByDepartment(form.departamento_residencia).sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
+        } catch (e) {
+            return [];
+        }
+    }, [form.departamento_residencia]);
 
     const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -100,14 +127,18 @@ const PublicApplyPage: React.FC = () => {
     }, [vacanteId]);
 
     const validate = (): boolean => {
-        const newErrors: Partial<FormData> = {};
+        const newErrors: Partial<ApplicationForm> = {};
+        if (!form.cedula.trim()) newErrors.cedula = 'Requerido';
         if (!form.nombres.trim()) newErrors.nombres = 'Requerido';
         if (!form.apellidos.trim()) newErrors.apellidos = 'Requerido';
         if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = 'Email inválido';
         if (!form.telefono.trim() || form.telefono.length < 7) newErrors.telefono = 'Teléfono inválido';
+        if (!form.departamento_residencia) newErrors.departamento_residencia = 'Requerido';
+        if (!form.ciudad_residencia) newErrors.ciudad_residencia = 'Requerido';
         if (!form.nivel_educativo) newErrors.nivel_educativo = 'Requerido';
         if (!form.como_se_entero) newErrors.como_se_entero = 'Requerido';
         if (!form.acepta_terminos) newErrors.acepta_terminos = 'Debes aceptar' as any;
+        if (!form.cv_file) newErrors.cv_file = 'Debe adjuntar su CV en PDF' as any;
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -120,10 +151,20 @@ const PublicApplyPage: React.FC = () => {
         setSubmitError('');
 
         try {
+            const formData = new FormData();
+            Object.keys(form).forEach(key => {
+                if (key === 'cv_file') {
+                    if (form.cv_file) formData.append('cv', form.cv_file);
+                } else if (key === 'acepta_terminos') {
+                    formData.append(key, form.acepta_terminos ? 'true' : 'false');
+                } else {
+                    formData.append(key, (form as any)[key]);
+                }
+            });
+
             const res = await fetch(`${API_BASE}/apply/${vacanteId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form)
+                body: formData
             });
             const data = await res.json();
 
@@ -141,7 +182,7 @@ const PublicApplyPage: React.FC = () => {
     // ---- FIELD SUB-COMPONENT Extracted to avoid focus loss ----
     const renderField = (
         label: string,
-        name: keyof FormData,
+        name: Exclude<keyof ApplicationForm, 'cv_file' | 'acepta_terminos'>,
         type: string = 'text',
         placeholder?: string,
         required: boolean = false,
@@ -240,7 +281,7 @@ const PublicApplyPage: React.FC = () => {
             <div className="bg-indigo-600/10 border-b border-indigo-500/20 px-4 py-3">
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <img src="/logo_discol.png" alt="DISCOL S.A.S." className="h-4 object-contain" />
+                        <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="DISCOL S.A.S." className="h-4 object-contain" />
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <Shield size={11} className="text-emerald-400" />
@@ -318,6 +359,9 @@ const PublicApplyPage: React.FC = () => {
                                 <User size={10} />
                                 Datos Personales
                             </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                {renderField("Cédula / Documento de Identidad", "cedula", "text", "Ej: 1045678912", true)}
+                            </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {renderField("Nombres", "nombres", "text", "Ej: Juan Carlos", true)}
                                 {renderField("Apellidos", "apellidos", "text", "Ej: Pérez García", true)}
@@ -335,20 +379,33 @@ const PublicApplyPage: React.FC = () => {
                                 {renderField("Correo Electrónico", "email", "email", "tucorreo@gmail.com", true)}
                                 {renderField("Teléfono / Celular", "telefono", "tel", "300 000 0000", true)}
                             </div>
-                            <div className="mt-4">
-                                {renderField("Ciudad de Residencia", "ciudad_residencia", "text", "Ej: Cartagena", false,
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                {renderField("Departamento de Residencia", "departamento_residencia", "text", undefined, true,
+                                    (
+                                        <select
+                                            value={form.departamento_residencia}
+                                            onChange={e => setForm(f => ({ ...f, departamento_residencia: e.target.value, ciudad_residencia: '' }))}
+                                            className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 transition-all appearance-none cursor-pointer ${errors.departamento_residencia ? 'border-red-500/50' : 'border-white/10 hover:border-white/20 focus:ring-indigo-500/30'}`}
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            {departamentos.map((d: any) => (
+                                                <option key={d.id} value={d.nombre}>{d.nombre}</option>
+                                            ))}
+                                        </select>
+                                    )
+                                )}
+                                {renderField("Ciudad de Residencia", "ciudad_residencia", "text", undefined, true,
                                     (
                                         <select
                                             value={form.ciudad_residencia}
                                             onChange={e => setForm(f => ({ ...f, ciudad_residencia: e.target.value }))}
-                                            className="w-full bg-slate-900 border border-white/10 hover:border-white/20 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all appearance-none cursor-pointer"
+                                            disabled={!form.departamento_residencia}
+                                            className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 transition-all appearance-none ${!form.departamento_residencia ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${errors.ciudad_residencia ? 'border-red-500/50' : 'border-white/10 hover:border-white/20 focus:ring-indigo-500/30'}`}
                                         >
-                                            <option value="Cartagena">📍 Cartagena (Preferida)</option>
-                                            <option value="Turbaco">Turbaco</option>
-                                            <option value="Arjona">Arjona</option>
-                                            <option value="Barranquilla">Barranquilla</option>
-                                            <option value="Bogotá">Bogotá</option>
-                                            <option value="Otra ciudad">Otra ciudad</option>
+                                            <option value="">Seleccionar...</option>
+                                            {ciudades.map((c: any, i: number) => (
+                                                <option key={i} value={c.nombre}>{c.nombre}</option>
+                                            ))}
                                         </select>
                                     )
                                 )}
@@ -404,6 +461,42 @@ const PublicApplyPage: React.FC = () => {
                                 />
                                 <p className="text-right text-[10px] text-slate-600 mt-1">{form.mensaje.length}/800</p>
                             </div>
+                        </div>
+
+                        {/* Adjuntar CV */}
+                        <div>
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                <FileText size={10} />
+                                Hoja de Vida (CV)
+                            </p>
+                            <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${errors.cv_file ? 'border-red-500/50 bg-red-500/5' : 'border-indigo-500/30 bg-indigo-500/5 hover:border-indigo-500/50 hover:bg-indigo-500/10'}`}>
+                                <input
+                                    type="file"
+                                    accept=".pdf"
+                                    id="cv_upload"
+                                    className="hidden"
+                                    onChange={e => setForm(f => ({ ...f, cv_file: e.target.files ? e.target.files[0] : null }))}
+                                />
+                                <label htmlFor="cv_upload" className="cursor-pointer flex flex-col items-center gap-2">
+                                    <FileText className={`w-8 h-8 ${form.cv_file ? 'text-indigo-400' : 'text-slate-400'}`} />
+                                    {form.cv_file ? (
+                                        <div className="text-sm text-indigo-300 font-medium break-all px-4">
+                                            {form.cv_file.name}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="text-sm font-bold text-white">Click para subir tu Hoja de Vida</span>
+                                            <span className="text-xs text-slate-500">Solo se permiten archivos en formato PDF</span>
+                                        </>
+                                    )}
+                                </label>
+                            </div>
+                            {errors.cv_file && (
+                                <p className="mt-2 text-xs text-red-400 flex items-center gap-1">
+                                    <AlertCircle size={10} />
+                                    {errors.cv_file as unknown as string}
+                                </p>
+                            )}
                         </div>
 
                         {/* ¿Cómo se enteró? */}

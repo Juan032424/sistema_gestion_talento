@@ -6,6 +6,27 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+
+// Configuración multer para CVs
+const uploadDir = path.join(__dirname, '../public/uploads/cvs');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const cedula = req.body.cedula || 'nocedula';
+        cb(null, 'cv-' + cedula + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // ============================================================
 // GET /api/apply/:token — Obtener info pública de la vacante
@@ -72,16 +93,28 @@ const AIMatchingEngine = require('../services/AIMatchingEngine');
 
 // ... (rest of imports)
 
-router.post('/:token', async (req, res) => {
+router.post('/:token', upload.single('cv'), async (req, res) => {
     try {
         const { token } = req.params;
         const {
+            cedula,
             nombres, apellidos, email, telefono,
             ciudad_residencia, nivel_educativo, anos_experiencia,
             cargo_actual, empresa_actual, mensaje, como_se_entero, acepta_terminos
         } = req.body;
 
-        // ... (validations)
+        if (!cedula) return res.status(400).json({ error: 'La cédula es requerida' });
+
+        // Verificación de duplicado por cédula y vacante
+        const [existingApp] = await pool.query(
+            "SELECT id FROM candidatos_seguimiento WHERE vacante_id = ? AND cedula = ?",
+            [parseInt(token), cedula]
+        );
+        if (existingApp.length > 0) {
+            return res.status(400).json({ error: 'Ya está registrado en el sistema y se estará validando y comunicando mediante el correo electrónico el personal de gestión humana' });
+        }
+
+        const cv_url = req.file ? `/uploads/cvs/${req.file.filename}` : null;
 
         // Verificar vacante
         const [vacantes] = await pool.query(
@@ -98,16 +131,17 @@ router.post('/:token', async (req, res) => {
         // 1. Insert in candidatos (master candidate record for the platform)
         const [result] = await pool.query(`
             INSERT INTO candidatos (
-                nombre, email, telefono, 
+                cedula, nombre, email, telefono, 
                 ciudad, titulo_profesional,
                 experiencia_total_anos,
-                estado, etapa
-            ) VALUES (?, ?, ?, ?, ?, ?, 'Activo', 'Aplicación')
-            ON DUPLICATE KEY UPDATE telefono = VALUES(telefono), updated_at = NOW()
+                cv_url, estado, etapa
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Activo', 'Aplicación')
+            ON DUPLICATE KEY UPDATE telefono = VALUES(telefono), cv_url = VALUES(cv_url), updated_at = NOW()
         `, [
-            nombreCompleto, emailLower, telefono?.trim(),
+            cedula?.trim(), nombreCompleto, emailLower, telefono?.trim(),
             ciudad_residencia?.trim() || 'Cartagena', cargo_actual?.trim(),
-            parseInt(anos_experiencia) || 0
+            parseInt(anos_experiencia) || 0,
+            cv_url
         ]);
 
         const candidatoId = result.insertId || (await pool.query('SELECT id FROM candidatos WHERE email = ?', [emailLower]))[0][0].id;
@@ -137,11 +171,11 @@ router.post('/:token', async (req, res) => {
         try {
             const [segResult] = await pool.query(`
                 INSERT INTO candidatos_seguimiento (
-                    vacante_id, nombre_candidato, etapa_actual, fuente_reclutamiento, 
-                    fecha_postulacion, score_tecnico_ia, resumen_ia_entrevista
-                ) VALUES (?, ?, 'Postulación', 'Portal', NOW(), ?, ?)
+                    vacante_id, cedula, nombre_candidato, etapa_actual, fuente_reclutamiento, 
+                    fecha_postulacion, score_tecnico_ia, resumen_ia_entrevista, cv_url
+                ) VALUES (?, ?, ?, 'Postulación', 'Portal', NOW(), ?, ?, ?)
             `, [
-                vacante.id, nombreCompleto, aiResult.score || 0, JSON.stringify(aiResult.recommendation)
+                vacante.id, cedula?.trim(), nombreCompleto, aiResult.score || 0, JSON.stringify(aiResult.recommendation), cv_url
             ]);
             seguimientoId = segResult.insertId;
         } catch (e) {

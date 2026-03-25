@@ -100,15 +100,15 @@ const LoginPage: React.FC = () => {
                     {/* Mobile logo */}
                     <div className="flex flex-col items-center lg:hidden mb-8">
                         <div className="w-48 h-16 rounded-xl flex items-center justify-center mb-4 border border-white/5" style={{ backgroundColor: 'var(--bg-panel)' }}>
-                            <img src="/logo_discol.png" alt="Logo" className="max-h-10 w-full object-contain px-4" />
+                            <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Logo" className="max-h-10 w-full object-contain px-4" />
                         </div>
                         <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>GH-SCORE <span className="text-blue-400 font-light">PRO</span></h1>
                     </div>
 
                     {/* Header with New Logo Location */}
                     <div className="flex flex-col items-center mb-10 text-center">
-                        <div className="w-full h-40 bg-black rounded-3xl flex items-center justify-center p-0 mb-8 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden group">
-                            <img src="/logo_discol.png" alt="Logo DISCOL" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <div className="w-full h-40 rounded-3xl flex items-center justify-center p-0 mb-8 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden group" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000' }}>
+                            <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Logo DISCOL" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         </div>
                         <div className="w-full text-left">
                             <div className="flex items-center gap-2 mb-3">

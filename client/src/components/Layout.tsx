@@ -127,7 +127,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="p-4 pt-5 pb-3">
                 <div className="flex flex-col items-center gap-2">
                     <div className="w-full h-20 rounded-2xl flex items-center justify-center p-0 mb-3 border border-white/10 shadow-lg overflow-hidden group" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000', borderColor: 'var(--border-color)' }}>
-                        <img src="/logo_discol.png" alt="Discol Logo" className="w-full h-full object-contain px-4 transition-transform duration-700 group-hover:scale-110" />
+                        <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Discol Logo" className="w-full h-full object-contain px-4 transition-transform duration-700 group-hover:scale-110" />
                     </div>
                     <h1 className="text-sm font-black tracking-tighter text-white text-center">
                         GH-SCORE <span className="text-[#3a94cc] font-light">PRO</span>

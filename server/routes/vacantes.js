@@ -160,7 +160,7 @@ router.post('/', verifyToken, requireRole(allowedRolesWrite), async (req, res) =
         codigo_requisicion, puesto_nombre, proceso_id, sede_id,
         fecha_apertura, fecha_cierre_estimada, prioridad,
         responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones,
-        dias_sla_meta, salario_base_ofrecido, costo_final_contratacion,
+        dias_sla_meta, salario_base_ofrecido, costo_final_contratacion, costo_examenes_medicos,
         cantidad = 1
     } = req.body;
 
@@ -211,9 +211,9 @@ router.post('/', verifyToken, requireRole(allowedRolesWrite), async (req, res) =
 
             const [result] = await pool.query(`
                 INSERT INTO vacantes 
-                (codigo_requisicion, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones, dias_sla_meta, salario_base_ofrecido, costo_final_contratacion, created_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [currentCode, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base || 0, costo_vacante || 0, observaciones, dias_sla_meta || 15, salario_base_ofrecido || 0, costo_final_contratacion || 0, req.user.id]);
+                (codigo_requisicion, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones, dias_sla_meta, salario_base_ofrecido, costo_final_contratacion, costo_examenes_medicos, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [currentCode, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base || 0, costo_vacante || 0, observaciones, dias_sla_meta || 15, salario_base_ofrecido || 0, costo_final_contratacion || 0, costo_examenes_medicos || 0, req.user.id]);
 
             results.push(result.insertId);
 
@@ -310,7 +310,7 @@ router.put('/:id', verifyToken, requireRole(allowedRolesWrite), async (req, res)
             'salario_base', 'costo_vacante', 'observaciones',
             'dias_sla_meta', 'salario_base_ofrecido', 'costo_final_contratacion',
             'costo_dia_vacante', 'presupuesto_max', 'salario_pactado', 'dias_desfase', 'sla_meta',
-            'proyecto_id', 'centro_costo_id', 'subcentro_id', 'tipo_trabajo_id', 'tipo_proyecto_id'
+            'proyecto_id', 'centro_costo_id', 'subcentro_id', 'tipo_trabajo_id', 'tipo_proyecto_id', 'costo_examenes_medicos'
         ];
 
         const filteredUpdates = {};
@@ -331,7 +331,7 @@ router.put('/:id', verifyToken, requireRole(allowedRolesWrite), async (req, res)
                     }
                 }
                 // 3. Ensure numbers are numbers
-                else if (['presupuesto_aprobado', 'salario_base', 'costo_vacante', 'proceso_id', 'sede_id'].includes(key)) {
+                else if (['presupuesto_aprobado', 'salario_base', 'costo_vacante', 'proceso_id', 'sede_id', 'costo_examenes_medicos'].includes(key)) {
                     // Check if it's a valid number string or number
                     if (!isNaN(parseFloat(val)) && isFinite(val)) {
                         filteredUpdates[key] = Number(val);

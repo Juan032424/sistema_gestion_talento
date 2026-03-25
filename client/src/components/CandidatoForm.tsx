@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import api from '../api';
 import {
     ChevronLeft,
@@ -23,6 +24,7 @@ const CandidatoForm: React.FC = () => {
     const { id } = useParams();
     const isEditing = Boolean(id);
     const [vacantes, setVacantes] = useState<any[]>([]);
+    const { theme } = useTheme();
 
     const [formData, setFormData] = useState({
         nombre_candidato: '',
@@ -103,8 +105,8 @@ const CandidatoForm: React.FC = () => {
                         </h2>
                         <p className="text-white/70 text-sm mt-1 font-medium">Gestión integral del proceso de selección</p>
                     </div>
-                    <div className="w-20 h-20 bg-white rounded-xl p-2 shadow-lg hidden sm:block rotate-3 hover:rotate-6 transition-transform duration-500">
-                        <img src="/logo_discol.png" alt="Logo" className="w-full h-full object-contain scale-125" />
+                    <div className="w-20 h-20 bg-white rounded-xl p-2 shadow-lg hidden sm:block rotate-3 hover:rotate-6 transition-transform duration-500" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000' }}>
+                        <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Logo" className="w-full h-full object-contain scale-125" />
                     </div>
                 </div>
 
