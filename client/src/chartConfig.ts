@@ -24,3 +24,4 @@ ChartJS.register(
     ArcElement,
     RadialLinearScale
 );
+

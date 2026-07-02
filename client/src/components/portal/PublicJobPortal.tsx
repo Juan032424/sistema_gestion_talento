@@ -313,3 +313,4 @@ const PublicJobPortal: React.FC = () => {
 };
 
 export default PublicJobPortal;
+

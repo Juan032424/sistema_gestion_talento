@@ -1,0 +1,15 @@
+{
+  "name": "sistema-gestion-talento-root",
+  "version": "1.0.0",
+  "description": "Ecosistema Digital Talent Management - DISCOL SAS",
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "db:setup": "cd server && node setup_db.js",
+    "start:server": "cd server && npm start",
+    "start:client": "cd client && npm run dev",
+    "start": "npx concurrently --kill-others-on-fail \"npm run start:server\" \"npm run start:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev": "npx concurrently --kill-others-on-fail \"npm run dev:server\" \"npm run dev:client\""
+  }
+}

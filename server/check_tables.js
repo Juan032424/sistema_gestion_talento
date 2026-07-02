@@ -1,19 +1,20 @@
 const pool = require('./db');
 
-async function checkTables() {
+async function check() {
     try {
-        console.log('NASA Check: Verifying database tables...');
-        const [tables] = await pool.query('SHOW TABLES');
-        console.log('Existing tables:', tables.map(t => Object.values(t)[0]));
+        console.log('--- APPLICATIONS ---');
+        const [appCols] = await pool.query('DESCRIBE applications');
+        console.table(appCols.map(c => ({ field: c.Field, type: c.Type })));
 
-        const [historySchema] = await pool.query('DESCRIBE historial_etapas');
-        console.log('Schema of historial_etapas:', historySchema);
+        console.log('\n--- CANDIDATOS SEGUIMIENTO ---');
+        const [seqCols] = await pool.query('DESCRIBE candidatos_seguimiento');
+        console.table(seqCols.map(c => ({ field: c.Field, type: c.Type })));
 
         process.exit(0);
-    } catch (e) {
-        console.error('NASA Fatal Check Error:', e);
+    } catch (err) {
+        console.error(err);
         process.exit(1);
     }
 }
 
-checkTables();
+check();

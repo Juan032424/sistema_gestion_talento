@@ -13,11 +13,21 @@ import {
     Linkedin,
     DollarSign,
     Zap,
-    Bot
+    Bot,
+    Book,
+    Users,
+    Truck,
+    Smartphone,
+    Info,
+    Shield,
+    X,
+    MapPin
 } from 'lucide-react';
+import { cn } from '../lib/utils';
 import { SectionHeader, PremiumInput, PremiumSelect } from './ui/PremiumComponents';
 import ActivityLogViewer from './ActivityLogViewer';
-import { History } from 'lucide-react';
+import AuditTimeline from './AuditTimeline';
+import { History, ShieldCheck } from 'lucide-react';
 
 const CandidatoForm: React.FC = () => {
     const navigate = useNavigate();
@@ -25,6 +35,7 @@ const CandidatoForm: React.FC = () => {
     const isEditing = Boolean(id);
     const [vacantes, setVacantes] = useState<any[]>([]);
     const { theme } = useTheme();
+    const [showRatingFields, setShowRatingFields] = useState(false);
 
     const [formData, setFormData] = useState({
         nombre_candidato: '',
@@ -41,7 +52,47 @@ const CandidatoForm: React.FC = () => {
         estatus_90_dias: '',
         resultado_final: '',
         score_tecnico_ia: '',
-        resumen_ia_entrevista: ''
+        resumen_ia_entrevista: '',
+        // Campos adicionales del portal público
+        cedula: '',
+        tipo_identificacion: '',
+        email: '',
+        telefono: '',
+        ciudad: '',
+        primer_apellido: '',
+        segundo_apellido: '',
+        segundo_nombre: '',
+        lugar_expedicion: '',
+        fecha_expedicion: '',
+        direccion: '',
+        fecha_nacimiento: '',
+        grupo_etnico: '',
+        genero: '',
+        estado_civil: '',
+        tiene_familiar: '',
+        parentesco_familiar: '',
+        nombre_familiar: '',
+        telefono_familiar: '',
+        tipo_vivienda: '',
+        servicios_publicos: '[]',
+        estrato: '',
+        tipo_vehiculo: '',
+        vehiculo_placa: '',
+        vehiculo_marca_modelo: '',
+        vehiculo_modelo_ano: '',
+        vehiculo_nombre_propietario: '',
+        vehiculo_cedula_propietario: '',
+        tiene_tarjeta_profesional: '',
+        numero_tarjeta_profesional: '',
+        formacion_academica: '[]',
+        historial_laboral: '[]',
+        tiene_hijos: '',
+        cantidad_hijos: 0,
+        cabeza_familia: '',
+        discapacidad: '',
+        dispuesto_celular: '',
+        casco_integral: '',
+        ano_matricula_moto: ''
     });
 
     useEffect(() => {
@@ -88,7 +139,10 @@ const CandidatoForm: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className={cn(
+            "mx-auto transition-all duration-500",
+            isEditing && formData.cv_url ? "max-w-[98%] px-2" : "max-w-4xl"
+        )}>
             <button
                 onClick={() => navigate(-1)}
                 className="flex items-center gap-2 text-gray-500 hover:text-white transition-all text-sm font-semibold mb-8 group"
@@ -97,23 +151,60 @@ const CandidatoForm: React.FC = () => {
                 Volver al listado
             </button>
 
-            <div className="bg-[#161b22] border border-white/5 rounded-3xl overflow-hidden shadow-2xl mb-20 animate-in fade-in zoom-in-95 duration-500">
-                <div className="bg-gradient-to-r from-[#1e4b7a] to-[#3a94cc] p-8 flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-black text-white tracking-tight">
-                            {isEditing ? `Editar Candidato: ${formData.nombre_candidato}` : 'Registrar Nuevo Candidato'}
-                        </h2>
-                        <p className="text-white/70 text-sm mt-1 font-medium">Gestión integral del proceso de selección</p>
+            <div className={cn(
+                "flex flex-col lg:flex-row gap-6 mb-20",
+                isEditing && formData.cv_url ? "items-stretch" : "items-start"
+            )}>
+                {/* PDF VIEWER PANEL (LEFT SIDE ON SPLIT VIEW) */}
+                {isEditing && formData.cv_url && (
+                    <div className="lg:w-1/2 flex flex-col bg-slate-800 border border-white/5 rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-left-4 duration-700">
+                        <div className="bg-slate-900 border-b border-white/5 p-6 flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><FileText size={20} /></div>
+                                <div>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest leading-none">Visor de Hoja de Vida</h3>
+                                    <p className="text-[10px] text-slate-500 font-mono mt-1.5 truncate max-w-[200px]">{formData.cv_url}</p>
+                                </div>
+                            </div>
+                            <a
+                                href={formData.cv_url}
+                                download
+                                className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95"
+                            >
+                                Descargar
+                            </a>
+                        </div>
+                        <div className="flex-1 bg-slate-950 p-1 min-h-[600px] lg:h-[calc(100vh-180px)] sticky top-24">
+                            <iframe
+                                src={formData.cv_url}
+                                className="w-full h-full rounded-2xl border-0"
+                                title="CV Preview"
+                            />
+                        </div>
                     </div>
-                    <div className="w-20 h-20 bg-white rounded-xl p-2 shadow-lg hidden sm:block rotate-3 hover:rotate-6 transition-transform duration-500" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000' }}>
-                        <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Logo" className="w-full h-full object-contain scale-125" />
-                    </div>
-                </div>
+                )}
 
-                <form onSubmit={handleSubmit} className="p-10 space-y-12">
+                {/* FORM PANEL */}
+                <div className={cn(
+                    "bg-slate-800 border border-white/5 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-500",
+                    isEditing && formData.cv_url ? "lg:w-1/2" : "w-full"
+                )}>
+                    <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 p-8 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-black text-white tracking-tight">
+                                {isEditing ? `Editar Candidato: ${formData.nombre_candidato}` : 'Registrar Nuevo Candidato'}
+                            </h2>
+                            <p className="text-white/70 text-sm mt-1 font-medium">Gestión integral del proceso de selección</p>
+                        </div>
+                        <div className="w-20 h-20 bg-white rounded-xl p-2 shadow-lg hidden sm:block rotate-3 hover:rotate-6 transition-transform duration-500" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000' }}>
+                            <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Logo" className="w-full h-full object-contain scale-125" />
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="p-10 space-y-12">
                     {/* SECCIÓN 1: DATOS PERSONALES */}
                     <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                        <SectionHeader icon={<User />} title="Información Básica" color="text-[#3a94cc]" />
+                        <SectionHeader icon={<User />} title="Información Básica" color="text-indigo-500" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <PremiumInput
                                 label="Nombre Completo"
@@ -159,6 +250,58 @@ const CandidatoForm: React.FC = () => {
                                 onChange={handleChange}
                                 icon={<DollarSign size={16} />}
                             />
+                        </div>
+
+                        {/* Datos del Portal — solo visible en edición */}
+                        {isEditing && (formData.cedula || formData.email || formData.telefono) && (
+                            <div className="border border-indigo-500/20 bg-indigo-500/[0.03] rounded-3xl p-6 space-y-5">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.25em]">Datos ingresados por el candidato vía portal</p>
+                                </div>
+
+                                {/* Fila 1: Identificación */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <InfoChip label="Tipo ID" value={formData.tipo_identificacion} />
+                                    <InfoChip label="Número de Cédula" value={formData.cedula} highlight />
+                                    <InfoChip label="Lugar de Expedición" value={formData.lugar_expedicion} />
+                                    <InfoChip label="Fecha de Expedición" value={formData.fecha_expedicion ? new Date(formData.fecha_expedicion).toLocaleDateString('es-CO') : undefined} />
+                                </div>
+
+                                {/* Fila 2: Contacto */}
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <InfoChip label="Teléfono / Celular" value={formData.telefono} />
+                                    <InfoChip label="Correo Electrónico" value={formData.email} />
+                                    <InfoChip label="Ciudad de Residencia" value={formData.ciudad} />
+                                </div>
+
+                                {/* Fila 3: Datos personales */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <InfoChip label="Fecha de Nacimiento" value={formData.fecha_nacimiento ? new Date(formData.fecha_nacimiento).toLocaleDateString('es-CO') : undefined} />
+                                    <InfoChip label="Género" value={formData.genero} />
+                                    <InfoChip label="Estado Civil" value={formData.estado_civil} />
+                                    <InfoChip label="Grupo Étnico" value={formData.grupo_etnico} />
+                                </div>
+
+                                {/* Fila 4: Residencia */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <InfoChip label="Dirección de Residencia" value={formData.direccion} className="md:col-span-2" />
+                                    <InfoChip label="Estrato" value={formData.estrato} />
+                                </div>
+
+                                {/* Fila 5: Familia en empresa */}
+                                {formData.tiene_familiar === 'Si' && (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        <InfoChip label="Familiar en empresa" value="Sí" />
+                                        <InfoChip label="Parentesco" value={formData.parentesco_familiar} />
+                                        <InfoChip label="Nombre Familiar" value={formData.nombre_familiar} />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Hoja de Vida Embebida - Solo mostramos si NO estamos en vista dividida */}
+                        {!isEditing && (
                             <PremiumInput
                                 label="Enlace Hoja de Vida (CV)"
                                 name="cv_url"
@@ -166,10 +309,227 @@ const CandidatoForm: React.FC = () => {
                                 onChange={handleChange}
                                 icon={<FileText size={16} />}
                             />
-                        </div>
+                        )}
                     </section>
 
-                    {/* SECCIÓN 2: PROCESO */}
+                    {/* SECCIÓN NUEVA: DETALLES DE LA POSTULACIÓN (RECLUTADOR) */}
+                    {isEditing && formData.cedula && (
+                        <section className="space-y-10 pt-10 border-t border-white/5 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                            <SectionHeader icon={<Info />} title="Detalles de la Postulación (Portal Público)" color="text-amber-400" />
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Datos Personales Expandidos */}
+                                <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 space-y-6">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500"><User size={18} /></div>
+                                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-300">Identificación y Ubicación</h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Documento</p>
+                                            <p className="text-sm text-white font-medium">{formData.tipo_identificacion || 'C.C.'} {formData.cedula}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Lugar / Fecha Exp.</p>
+                                            <p className="text-sm text-white font-medium">{formData.lugar_expedicion || 'N/A'} - {formData.fecha_expedicion ? new Date(formData.fecha_expedicion).toLocaleDateString() : 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Fecha Nacimiento</p>
+                                            <p className="text-sm text-white font-medium">{formData.fecha_nacimiento ? new Date(formData.fecha_nacimiento).toLocaleDateString() : 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Vivienda y Estrato</p>
+                                            <p className="text-sm text-white font-medium">{formData.tipo_vivienda || 'N/A'} (Estrato {formData.estrato || 'N/A'})</p>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Dirección de Residencia</p>
+                                            <p className="text-sm text-white font-medium flex items-center gap-2"><MapPin size={14} className="text-slate-500" /> {formData.direccion || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Familiar en empresa</p>
+                                            <p className="text-sm text-white font-medium">{formData.tiene_familiar === 'Si' ? `Sí (${formData.parentesco_familiar}: ${formData.nombre_familiar})` : 'No'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Estado Civil / Género</p>
+                                            <p className="text-sm text-white font-medium">{formData.estado_civil || 'N/A'} / {formData.genero || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Información Familiar y Herramientas */}
+                                <div className="space-y-8">
+                                    <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 space-y-6">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="p-2 bg-pink-500/10 rounded-lg text-pink-500"><Users size={18} /></div>
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-300">Situación Familiar</h3>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Hijos</p>
+                                                <p className="text-sm text-white font-medium">{formData.tiene_hijos === 'Si' ? `${formData.cantidad_hijos} hijo(s)` : 'Sin hijos'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Cabeza de Familia</p>
+                                                <p className="text-sm text-white font-medium">{formData.cabeza_familia || 'No'}</p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Discapacidad</p>
+                                                <p className="text-sm text-white font-medium">{formData.discapacidad || 'Ninguna'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 space-y-6">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500"><Truck size={18} /></div>
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-300">Herramientas y Vehículo</h3>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Vehículo</p>
+                                                <p className="text-sm text-white font-medium">{formData.tipo_vehiculo || 'No cuenta'}</p>
+                                            </div>
+                                            {formData.tipo_vehiculo && formData.tipo_vehiculo !== 'No cuenta' && (
+                                                <>
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Placa</p>
+                                                        <p className="text-sm text-white font-medium">{formData.vehiculo_placa}</p>
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Marca/Modelo/Propietario</p>
+                                                        <p className="text-sm text-white font-medium">{formData.vehiculo_marca_modelo} ({formData.vehiculo_modelo_ano}) - {formData.vehiculo_nombre_propietario}</p>
+                                                    </div>
+                                                </>
+                                            )}
+                                            <div>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Dispuesto usar Celular</p>
+                                                <p className="text-sm text-white font-medium flex items-center gap-2"><Smartphone size={14} className="text-indigo-400" /> {formData.dispuesto_celular || 'No'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Formación Académica Table */}
+                            <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><Book size={18} /></div>
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-300">Formación Académica</h3>
+                                    {formData.tiene_tarjeta_profesional === 'Si' && (
+                                        <span className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 border border-green-500/20 text-green-400 text-[9px] font-black uppercase rounded-full">
+                                            <Shield size={10} /> Tarjeta Prof: {formData.numero_tarjeta_profesional}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs border-separate border-spacing-y-2">
+                                        <thead>
+                                            <tr className="text-slate-500 uppercase tracking-widest font-black">
+                                                <th className="pb-4 pl-4">Nivel</th>
+                                                <th className="pb-4">Institución</th>
+                                                <th className="pb-4">Título</th>
+                                                <th className="pb-4">Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(() => {
+                                                const fa = formData.formacion_academica ? (typeof formData.formacion_academica === 'string' ? JSON.parse(formData.formacion_academica) : formData.formacion_academica) : [];
+                                                if (Array.isArray(fa) && fa.length > 0) {
+                                                    return fa.map((f: any, i: number) => (
+                                                        <tr key={i} className="bg-white/5 hover:bg-white/10 transition-colors">
+                                                            <td className="py-4 pl-4 rounded-l-xl font-bold text-white">{f.nivel}</td>
+                                                            <td className="py-4 text-slate-300">{f.institucion}</td>
+                                                            <td className="py-4 text-slate-300">{f.titulo}</td>
+                                                            <td className="py-4 pr-4 rounded-r-xl">
+                                                                <span className={`px-2 py-1 rounded-md ${f.completado === 'Si' ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                                                                    {f.completado === 'Si' ? 'Completo' : 'Incompleto'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ));
+                                                }
+                                                return <tr><td colSpan={4} className="py-8 text-center text-slate-600 font-bold italic tracking-widest uppercase">Sin información académica registrada</td></tr>;
+                                            })()}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Historial Laboral Table */}
+                            <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><Briefcase size={18} /></div>
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-300">Historial Laboral</h3>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs border-separate border-spacing-y-2">
+                                        <thead>
+                                            <tr className="text-slate-500 uppercase tracking-widest font-black">
+                                                <th className="pb-4 pl-4">Empresa</th>
+                                                <th className="pb-4">Cargo</th>
+                                                <th className="pb-4 text-center">Experiencia</th>
+                                                <th className="pb-4 text-right pr-4">Logros</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(() => {
+                                                const hl = formData.historial_laboral ? (typeof formData.historial_laboral === 'string' ? JSON.parse(formData.historial_laboral) : formData.historial_laboral) : [];
+                                                if (Array.isArray(hl) && hl.length > 0) {
+                                                    return hl.map((h: any, i: number) => (
+                                                        <tr key={i} className="bg-white/5 hover:bg-white/10 transition-colors">
+                                                            <td className="py-4 pl-4 rounded-l-xl font-bold text-white">{h.empresa}</td>
+                                                            <td className="py-4 text-slate-300">{h.cargo}</td>
+                                                            <td className="py-4 text-center">
+                                                                <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md font-bold">
+                                                                    {h.anos || 0}a {h.meses || 0}m
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-4 pr-4 rounded-r-xl text-right text-slate-500 italic max-w-xs truncate">{h.logros || 'N/A'}</td>
+                                                        </tr>
+                                                    ));
+                                                }
+                                                return <tr><td colSpan={4} className="py-8 text-center text-slate-600 font-bold italic tracking-widest uppercase">Sin historial laboral registrado</td></tr>;
+                                            })()}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* BOTÓN PARA DESPLEGAR CALIFICACIÓN */}
+                    {isEditing && (
+                        <div className="flex flex-col items-center gap-6 py-6 border-y border-white/5 bg-white/[0.01]">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Gestión del Talento</p>
+                            <button
+                                type="button"
+                                onClick={() => setShowRatingFields(!showRatingFields)}
+                                className={cn(
+                                    "flex items-center gap-3 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-2xl active:scale-95",
+                                    showRatingFields
+                                        ? "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20"
+                                        : "bg-indigo-500 text-white hover:bg-indigo-600 hover:scale-105"
+                                )}
+                            >
+                                {showRatingFields ? (
+                                    <>
+                                        <X size={18} />
+                                        <span>OCULTAR PANELES DE CALIFICACIÓN</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Zap size={18} className="animate-pulse" />
+                                        <span>CALIFICAR AL CANDIDATO</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* SECCIONES CONDICIONALES */}
+                    {(!isEditing || showRatingFields) && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+                            {/* SECCIÓN 2: PROCESO */}
                     <section className="space-y-8 pt-8 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
                         <SectionHeader icon={<CheckCircle2 />} title="Estado del Proceso" color="text-emerald-400" />
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -307,12 +667,28 @@ const CandidatoForm: React.FC = () => {
                             </div>
                         </div>
                     </section>
-                    {/* SECCIÓN 5: HISTORIAL DE ACTIVIDAD (Solo en edición) */}
+
+
+
+                    {/* SECCIÓN 5: TRAZABILIDAD Y AUDITORÍA (Solo en edición) */}
                     {isEditing && (
-                        <section className="space-y-8 pt-8 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
-                            <SectionHeader icon={<History />} title="Historial de Actividad del Candidato" color="text-blue-400" />
-                            <ActivityLogViewer candidateTrackingId={Number(id)} />
-                        </section>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-8 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+                            {/* Columna Izquierda: Actividad del Candidato (Portal) */}
+                            <section className="space-y-8">
+                                <SectionHeader icon={<History />} title="Comportamiento en Portal" color="text-indigo-400" />
+                                <ActivityLogViewer candidateTrackingId={Number(id)} />
+                            </section>
+
+                            {/* Columna Derecha: Trazabilidad Corporativa (Auditoría Admin) */}
+                            <section className="space-y-8">
+                                <SectionHeader icon={<ShieldCheck />} title="Bitácora de Seguimiento" color="text-emerald-400" />
+                                <AuditTimeline entityId={id!} />
+                            </section>
+                        </div>
+                    )}
+
+
+                        </div>
                     )}
 
                     <div className="flex justify-end gap-6 pt-10 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
@@ -327,7 +703,7 @@ const CandidatoForm: React.FC = () => {
                             type="submit"
                             className="relative overflow-hidden group px-12 py-4 rounded-xl font-bold text-white shadow-2xl transition-all hover:scale-105 active:scale-95"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#1e4b7a] to-[#3a94cc] transition-all group-hover:scale-110" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-indigo-500 transition-all group-hover:scale-110" />
                             <div className="relative flex items-center gap-3">
                                 <Save size={20} className="group-hover:animate-bounce" />
                                 <span>{isEditing ? 'GUARDAR CAMBIOS' : 'REGISTRAR CANDIDATO'}</span>
@@ -337,9 +713,19 @@ const CandidatoForm: React.FC = () => {
                 </form>
             </div>
         </div>
-    );
+    </div>
+);
 };
 
-// Imported from ../ui/PremiumComponents
+// InfoChip: read-only data chip for portal-submitted candidate data
+const InfoChip: React.FC<{ label: string; value?: string | null; highlight?: boolean; className?: string }> = ({ label, value, highlight, className = '' }) => (
+    <div className={`flex flex-col gap-1 p-3 rounded-2xl bg-white/[0.03] border border-white/5 ${className}`}>
+        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">{label}</p>
+        <p className={`text-xs font-bold truncate ${highlight ? 'text-indigo-500' : 'text-slate-200'} ${!value ? 'text-slate-600 italic' : ''}`}>
+            {value || 'No informado'}
+        </p>
+    </div>
+);
 
 export default CandidatoForm;
+

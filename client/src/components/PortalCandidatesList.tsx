@@ -249,3 +249,4 @@ const PortalCandidatesList: React.FC = () => {
 };
 
 export default PortalCandidatesList;
+

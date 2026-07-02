@@ -87,7 +87,7 @@ const HotVacanciesDashboard: React.FC = () => {
                             <div className="text-center">
                                 <p className="text-[9px] text-gray-500 font-bold mb-0.5">Únicos</p>
                                 <div className="flex items-center justify-center gap-1 text-white font-mono text-xs">
-                                    <Users size={10} className="text-indigo-400" />
+                                    <Users size={10} className="text-blue-400" />
                                     {v.unique_candidate_views}
                                 </div>
                             </div>
@@ -120,3 +120,4 @@ const HotVacanciesDashboard: React.FC = () => {
 };
 
 export default HotVacanciesDashboard;
+

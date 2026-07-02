@@ -105,10 +105,10 @@ const AIInsightsHub: React.FC = () => {
                 <div className="lg:col-span-8 glass-panel p-8">
                     <div className="flex items-center justify-between mb-8">
                         <h2 className="text-xl font-bold flex items-center gap-3">
-                            <History size={20} className="text-indigo-400" />
+                            <History size={20} className="text-blue-400" />
                             Flujo de Pensamiento de IA
                         </h2>
-                        <span className="text-[10px] font-black bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full uppercase">
+                        <span className="text-[10px] font-black bg-[#055098]/10 text-blue-400 border border-[#055098]/20 px-3 py-1 rounded-full uppercase">
                             Live Stream
                         </span>
                     </div>
@@ -128,7 +128,7 @@ const AIInsightsHub: React.FC = () => {
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">{log.agent_name}</span>
+                                            <span className="text-xs font-black text-blue-400 uppercase tracking-widest">{log.agent_name}</span>
                                             <span className="text-[10px] text-slate-500 font-mono">{new Date(log.performed_at).toLocaleTimeString()}</span>
                                         </div>
                                         <p className="text-sm text-slate-300 font-medium">{log.details}</p>
@@ -152,7 +152,7 @@ const AIInsightsHub: React.FC = () => {
                 <div className="lg:col-span-4 space-y-6">
                     <div className="glass-panel p-8">
                         <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-                            <Brain size={20} className="text-violet-400" />
+                            <Brain size={20} className="text-[#055098]" />
                             Predicción T2H
                         </h2>
                         <div className="space-y-6">
@@ -195,3 +195,4 @@ const AIInsightsHub: React.FC = () => {
 };
 
 export default AIInsightsHub;
+

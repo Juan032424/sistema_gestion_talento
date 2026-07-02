@@ -15,17 +15,15 @@ const NavigationBanner: React.FC = () => {
     const isInPortal = location.pathname.startsWith('/portal');
     const isInAdmin = !isInPortal;
 
-    // Don't show on login/register pages
-    if (location.pathname === '/login' || location.pathname === '/register') {
-        return null;
-    }
+    // Banner deshabilitado por solicitud del usuario
+    return null;
 
     return (
         <div className={cn(
             "sticky top-0 z-40 backdrop-blur-xl border-b transition-all duration-300",
             isInPortal
                 ? "bg-slate-900/80 border-white/5"
-                : "bg-[#0a0c10]/90 border-white/5"
+                : "bg-slate-950/90 border-white/5"
         )}>
             <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
                 {/* Current Context Indicator */}
@@ -69,3 +67,4 @@ const NavigationBanner: React.FC = () => {
 };
 
 export default NavigationBanner;
+

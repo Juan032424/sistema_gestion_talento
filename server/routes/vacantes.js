@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const emailService = require('../services/EmailService');
+const auditService = require('../services/AuditService');
 
 const allowedRolesRead = ['Superadmin', 'Admin', 'Reclutador', 'Lider'];
 const allowedRolesWrite = ['Superadmin', 'Admin', 'Lider'];
@@ -31,7 +32,7 @@ router.get('/next-code', verifyToken, requireRole(allowedRolesRead), async (req,
 // GET all vacantes
 router.get('/', verifyToken, requireRole(allowedRolesRead), async (req, res) => {
     try {
-        const [rows] = await pool.query(`
+        let query = `
             SELECT v.*, 
                 s.nombre as sede_nombre, 
                 p.nombre as proceso_nombre,
@@ -39,8 +40,10 @@ router.get('/', verifyToken, requireRole(allowedRolesRead), async (req, res) => 
                 cc.nombre as centro_nombre,
                 sc.nombre as subcentro_nombre,
                 tt.nombre as tipo_trabajo_nombre,
-                tp.nombre as tipo_proyecto_nombre
+                tp.nombre as tipo_proyecto_nombre,
+                us.avatar_url as responsable_avatar
             FROM vacantes v
+            LEFT JOIN users us ON v.responsable_rh = us.full_name
             LEFT JOIN sedes s ON v.sede_id = s.id
             LEFT JOIN procesos p ON v.proceso_id = p.id
             LEFT JOIN proyectos proy ON v.proyecto_id = proy.id
@@ -48,8 +51,15 @@ router.get('/', verifyToken, requireRole(allowedRolesRead), async (req, res) => 
             LEFT JOIN subcentros_costo sc ON v.subcentro_id = sc.id
             LEFT JOIN tipos_trabajo tt ON v.tipo_trabajo_id = tt.id
             LEFT JOIN tipos_proyecto tp ON v.tipo_proyecto_id = tp.id
-            ORDER BY v.fecha_apertura DESC
-        `);
+            WHERE v.deleted_at IS NULL
+        `;
+        const params = [];
+        if (req.query.periodo) {
+            query += " AND v.periodo = ?";
+            params.push(req.query.periodo);
+        }
+        query += " ORDER BY v.fecha_apertura DESC";
+        const [rows] = await pool.query(query, params);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -59,7 +69,26 @@ router.get('/', verifyToken, requireRole(allowedRolesRead), async (req, res) => 
 // GET statistics (Lead Time & KPIs)
 router.get('/stats', verifyToken, requireRole(allowedRolesRead), async (req, res) => {
     try {
-        const [vacantes] = await pool.query('SELECT * FROM vacantes');
+        const { periodo, sede_id, id } = req.query;
+        let whereClause = 'WHERE deleted_at IS NULL';
+        const params = [];
+
+        if (periodo && periodo !== 'HISTORICO' && periodo !== '2024-HIST') {
+            whereClause += ' AND periodo = ?';
+            params.push(periodo);
+        } else if (periodo === '2024-HIST') {
+            whereClause += " AND periodo LIKE '2024-%'";
+        }
+        if (sede_id) {
+            whereClause += ' AND sede_id = ?';
+            params.push(sede_id);
+        }
+        if (id) {
+            whereClause += ' AND id = ?';
+            params.push(id);
+        }
+
+        const [vacantes] = await pool.query(`SELECT * FROM vacantes ${whereClause}`, params);
 
         let totalLeadTime = 0;
         let closedCount = 0;
@@ -96,35 +125,68 @@ router.get('/stats', verifyToken, requireRole(allowedRolesRead), async (req, res
         const avgLeadTime = closedCount > 0 ? (totalLeadTime / closedCount).toFixed(1) : 0;
         const efficiency = closedCount > 0 ? ((onTimeCount / closedCount) * 100).toFixed(1) : 0;
 
-        // Financial Impact Calculation
+        // Financial Impact Calculation & State Breakdown
         let totalFinancialImpact = 0;
+        let totalInvestment = 0; // Solid costs (spent)
+        let totalLoss = 0;       // Opportunity/Delay loss
+
+        const impactByState = {
+            'Abierta': 0,
+            'En Proceso': 0,
+            'Cubierta': 0,
+            'Cancelada': 0,
+            'Suspendida': 0
+        };
+
         vacantes.forEach(v => {
-            if (v.estado !== 'Cubierta' && now > new Date(v.fecha_cierre_estimada)) {
+            let stateImpact = 0;
+            
+            // 1. Direct Vacancy Cost (spent regardless of status if filled in)
+            const directCost = Number(v.costo_vacante || 0);
+            stateImpact += directCost;
+            totalInvestment += directCost;
+
+            // 2. Extra costs for filled positions
+            if (v.estado === 'Cubierta') {
+                const extraCosts = Number(v.costo_examenes_medicos || 0) + Number(v.costo_final_contratacion || 0);
+                stateImpact += extraCosts;
+                totalInvestment += extraCosts;
+            }
+
+            // 3. Opportunity Cost / Delay Loss (for open/in process)
+            if (v.estado !== 'Cubierta' && v.estado !== 'Cancelada' && now > new Date(v.fecha_cierre_estimada)) {
                 const start = new Date(v.fecha_cierre_estimada);
                 const diffTime = Math.abs(now - start);
                 const daysDelayed = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 const dailySalary = (v.salario_base || 0) / 30;
-                // Formula: Cost = Daily Salary * Days Delayed * 1.5 (Productivity Loss Factor)
-                totalFinancialImpact += dailySalary * daysDelayed * 1.5;
+                
+                // Formula: Productivity Loss = Daily Salary * Days Delayed * 1.5 factor
+                const delayLoss = dailySalary * daysDelayed * 1.5;
+                stateImpact += delayLoss;
+                totalLoss += delayLoss;
             }
+
+            impactByState[v.estado] = (impactByState[v.estado] || 0) + stateImpact;
         });
+
+        totalFinancialImpact = totalInvestment + totalLoss;
 
         // Recruiter workload balance
         const [recruiterWorkload] = await pool.query(`
             SELECT responsable_rh, COUNT(*) as active_count 
             FROM vacantes 
-            WHERE estado IN ('Abierta', 'En Proceso')
+            ${whereClause} AND estado IN ('Abierta', 'En Proceso')
             GROUP BY responsable_rh
-        `);
+        `, params);
 
         // Geographic distribution
         const [geoDistribution] = await pool.query(`
             SELECT s.nombre as sede, COUNT(*) as count 
             FROM vacantes v
             JOIN sedes s ON v.sede_id = s.id
-            WHERE v.estado IN ('Abierta', 'En Proceso')
+            ${whereClause.replace('periodo', 'v.periodo').replace('sede_id', 'v.sede_id').replace(' id ', ' v.id ')} AND v.estado IN ('Abierta', 'En Proceso')
             GROUP BY s.nombre
-        `);
+        `, params);
 
         res.json({
             avgLeadTime,
@@ -133,6 +195,9 @@ router.get('/stats', verifyToken, requireRole(allowedRolesRead), async (req, res
             closedCount,
             expiredCount,
             totalFinancialImpact: totalFinancialImpact.toFixed(2),
+            totalInvestment: totalInvestment.toFixed(2),
+            totalLoss: totalLoss.toFixed(2),
+            impactByState,
             recruiterWorkload,
             geoDistribution
         });
@@ -146,7 +211,7 @@ router.get('/stats', verifyToken, requireRole(allowedRolesRead), async (req, res
 router.get('/:id', verifyToken, requireRole(allowedRolesRead), async (req, res) => {
     const { id } = req.params;
     try {
-        const [rows] = await pool.query('SELECT * FROM vacantes WHERE id = ?', [id]);
+        const [rows] = await pool.query('SELECT * FROM vacantes WHERE id = ? AND deleted_at IS NULL', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Vacante no encontrada' });
         res.json(rows[0]);
     } catch (error) {
@@ -161,7 +226,7 @@ router.post('/', verifyToken, requireRole(allowedRolesWrite), async (req, res) =
         fecha_apertura, fecha_cierre_estimada, prioridad,
         responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones,
         dias_sla_meta, salario_base_ofrecido, costo_final_contratacion, costo_examenes_medicos,
-        cantidad = 1
+        cantidad = 1, periodo = 'Actual'
     } = req.body;
 
     const qty = parseInt(cantidad) || 1;
@@ -211,9 +276,9 @@ router.post('/', verifyToken, requireRole(allowedRolesWrite), async (req, res) =
 
             const [result] = await pool.query(`
                 INSERT INTO vacantes 
-                (codigo_requisicion, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones, dias_sla_meta, salario_base_ofrecido, costo_final_contratacion, costo_examenes_medicos, created_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [currentCode, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base || 0, costo_vacante || 0, observaciones, dias_sla_meta || 15, salario_base_ofrecido || 0, costo_final_contratacion || 0, costo_examenes_medicos || 0, req.user.id]);
+                (codigo_requisicion, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base, costo_vacante, observaciones, dias_sla_meta, salario_base_ofrecido, costo_final_contratacion, costo_examenes_medicos, created_by, periodo)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [currentCode, puesto_nombre, proceso_id, sede_id, fecha_apertura, fecha_cierre_estimada, prioridad, responsable_rh, presupuesto_aprobado, salario_base || 0, costo_vacante || 0, observaciones, dias_sla_meta || 15, salario_base_ofrecido || 0, costo_final_contratacion || 0, costo_examenes_medicos || 0, req.user.id, periodo]);
 
             results.push(result.insertId);
 
@@ -310,7 +375,7 @@ router.put('/:id', verifyToken, requireRole(allowedRolesWrite), async (req, res)
             'salario_base', 'costo_vacante', 'observaciones',
             'dias_sla_meta', 'salario_base_ofrecido', 'costo_final_contratacion',
             'costo_dia_vacante', 'presupuesto_max', 'salario_pactado', 'dias_desfase', 'sla_meta',
-            'proyecto_id', 'centro_costo_id', 'subcentro_id', 'tipo_trabajo_id', 'tipo_proyecto_id', 'costo_examenes_medicos'
+            'proyecto_id', 'centro_costo_id', 'subcentro_id', 'tipo_trabajo_id', 'tipo_proyecto_id', 'costo_examenes_medicos', 'periodo'
         ];
 
         const filteredUpdates = {};
@@ -424,35 +489,33 @@ router.put('/:id', verifyToken, requireRole(allowedRolesWrite), async (req, res)
     }
 });
 
-// DELETE Vacante
+// DELETE Vacante (Soft Delete)
 router.delete('/:id', verifyToken, requireRole(allowedRolesWrite), async (req, res) => {
     const { id } = req.params;
     try {
-        // 1. Eliminar referencias en el portal público
-        await pool.query('DELETE FROM public_job_postings WHERE vacante_id = ?', [id]).catch(e => console.log('public error', e.message));
-
-        // 2. Eliminar referencias en las postulaciones públicas (applications)
-        await pool.query('DELETE FROM applications WHERE vacante_id = ?', [id]).catch(e => console.log('apps schema error', e.message));
-
-        // 3. Eliminar referencias en el historial de las etapas
-        await pool.query('DELETE FROM historial_etapas WHERE vacante_id = ?', [id]).catch(e => console.log('historial error', e.message));
-
-        // 4. Eliminar referencias en tarjetas de candidatos_seguimiento
-        await pool.query('DELETE FROM candidatos_seguimiento WHERE vacante_id = ?', [id]).catch(e => console.log('seguimiento error', e.message));
-
-        // 5. Eliminar asociaciones si la tabla se llama candidatos_vacantes
-        await pool.query('DELETE FROM candidatos_vacantes WHERE vacancia_id = ?', [id]).catch(e => console.log('assoc error', e.message));
-        await pool.query('DELETE FROM candidatos_vacantes WHERE vacante_id = ?', [id]).catch(e => console.log('assoc error2', e.message));
-
-        const [result] = await pool.query('DELETE FROM vacantes WHERE id = ?', [id]);
+        // Soft delete the vacante instead of hard deleting and destroying all histories
+        const [result] = await pool.query('UPDATE vacantes SET deleted_at = NOW(), estado = "Cancelada" WHERE id = ? AND deleted_at IS NULL', [id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Vacante no encontrada o ya eliminada' });
         }
-        res.json({ message: 'Vacante eliminada correctamente' });
+        
+        await pool.query('UPDATE public_job_postings SET is_public = FALSE WHERE vacante_id = ?', [id]).catch(e => null);
+
+        await auditService.log(
+            req.user?.id || null,
+            req.user?.email || null,
+            'vacantes',
+            id,
+            'DELETE (Soft)',
+            { note: 'Vacante movida a papelera y despublicada' },
+            req.ip
+        );
+
+        res.json({ message: 'Vacante almacenada en papelera correctamente' });
     } catch (error) {
-        console.error('Error deleting vacante:', error);
-        res.status(500).json({ error: 'No se pudo eliminar la vacante debido a dependencias en el sistema.' });
+        console.error('Error soft deleting vacante:', error);
+        res.status(500).json({ error: 'No se pudo eliminar la vacante debido a un error de sistema.' });
     }
 });
 

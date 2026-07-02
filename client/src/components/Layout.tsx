@@ -30,6 +30,7 @@ import { useAuth } from '../context/AuthProvider';
 import WorkplaceAssistant from './WorkplaceAssistant';
 import NavigationBanner from './NavigationBanner';
 import AdminNotificationPanel from './AdminNotificationPanel';
+import { useConfirm } from './ui/ConfirmModal';
 
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -106,8 +107,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
 
-    const handleLogout = () => {
-        const confirmed = window.confirm('¿Estás seguro de que quieres cerrar sesión?');
+    const confirm = useConfirm();
+
+    const handleLogout = async () => {
+        const confirmed = await confirm({
+            title: 'Cerrar Sesión',
+            message: '¿Estás seguro de que quieres cerrar sesión? Tu progreso sin guardar podría perderse.',
+            confirmText: 'Cerrar Sesión',
+            cancelText: 'Cancelar',
+            variant: 'warning',
+        });
         if (confirmed) {
             logout();
         }
@@ -127,7 +136,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="p-4 pt-5 pb-3">
                 <div className="flex flex-col items-center gap-2">
                     <div className="w-full h-20 rounded-2xl flex items-center justify-center p-0 mb-3 border border-white/10 shadow-lg overflow-hidden group" style={{ backgroundColor: theme === 'light' ? '#fff' : '#000', borderColor: 'var(--border-color)' }}>
-                        <img src={theme === 'light' ? "/logo_discol_light.png" : "/logo_discol.png"} alt="Discol Logo" className="w-full h-full object-contain px-4 transition-transform duration-700 group-hover:scale-110" />
+                        <img src={theme === 'light' ? "/logo_light_gh.png" : "/logo_dark_gh.jpg"} alt="Discol Logo" className="w-full h-full object-contain px-4 transition-transform duration-700 group-hover:scale-110" />
                     </div>
                     <h1 className="text-sm font-black tracking-tighter text-white text-center">
                         GH-SCORE <span className="text-[#3a94cc] font-light">PRO</span>
@@ -179,9 +188,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
                 <div className="flex items-center gap-2.5 px-1 py-0.5">
                     <div className="relative shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-[10px] font-bold ring-2 ring-white/10 shadow-lg shadow-blue-900/40">
-                            {getUserInitials()}
-                        </div>
+                        {user && 'avatarUrl' in user && user.avatarUrl ? (
+                            <img src={`http://localhost:3001${(user as any).avatarUrl}`} className="w-8 h-8 rounded-full object-cover ring-2 ring-[#3a94cc]/60 shadow-[0_0_15px_rgba(58,148,204,0.4)]" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#3a94cc] to-[#1e4b7a] flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-[#1e4b7a]/40 border border-white/10">
+                                {getUserInitials()}
+                            </div>
+                        )}
                         <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border rounded-full" style={{ borderColor: 'var(--bg-sidebar)' }}></div>
                     </div>
                     <div className="flex-1 min-w-0">

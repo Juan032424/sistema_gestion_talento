@@ -15,10 +15,15 @@ import {
     AlertCircle,
     Activity,
     Target,
-    Award
+    Award,
+    FileText,
+    Download,
+    X,
+    Edit2
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motion } from 'framer-motion';
+import { useConfirm } from '../ui/ConfirmModal';
 
 const VacanteDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -28,6 +33,7 @@ const VacanteDetail: React.FC = () => {
     const [vacante, setVacante] = useState<Vacante | null>(null);
     const [candidatos, setCandidatos] = useState<Candidato[]>([]);
     const [loading, setLoading] = useState(true);
+    const [cvModalUrl, setCvModalUrl] = useState<string | null>(null);
 
     useEffect(() => {
         fetchVacanteDetails();
@@ -51,15 +57,22 @@ const VacanteDetail: React.FC = () => {
         }
     };
 
+    const confirm = useConfirm();
+
     const handleCerrarVacante = async () => {
         if (!vacante) return;
 
         try {
-            // Check if there is at least one hired candidate
             const hasHired = candidatos.some(c => c.etapa_actual === 'Contratado');
 
-            if (!hasHired && !window.confirm('No hay candidatos contratados. ¿Estás seguro de cerrar la vacante?')) {
-                return;
+            if (!hasHired) {
+                const ok = await confirm({
+                    title: 'Cerrar Vacante Sin Contratado',
+                    message: 'No hay candidatos contratados. ¿Estás seguro de cerrar esta vacante?',
+                    confirmText: 'Sí, Cerrar',
+                    variant: 'warning',
+                });
+                if (!ok) return;
             }
 
             await api.put(`/vacantes/${vacante.id}`, {
@@ -78,7 +91,7 @@ const VacanteDetail: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-[60vh]">
-                <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
             </div>
         );
     }
@@ -90,7 +103,7 @@ const VacanteDetail: React.FC = () => {
                 <h2 className="text-xl font-bold text-white mb-2">Vacante no encontrada</h2>
                 <button
                     onClick={() => navigate('/vacantes')}
-                    className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
                 >
                     Volver a la lista
                 </button>
@@ -113,7 +126,7 @@ const VacanteDetail: React.FC = () => {
         { title: 'Total Postulados', value: candidatos.length, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
         { title: 'En Entrevista', value: candidatos.filter(c => c.etapa_actual.includes('Entrevista')).length, icon: Activity, color: 'text-amber-400', bg: 'bg-amber-500/10' },
         { title: 'Días Activa', value: diffDays, icon: Clock, color: inTime ? 'text-emerald-400' : 'text-rose-400', bg: inTime ? 'bg-emerald-500/10' : 'bg-rose-500/10' },
-        { title: 'Contratados', value: candidatos.filter(c => c.etapa_actual === 'Contratado').length, icon: Award, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+        { title: 'Contratados', value: candidatos.filter(c => c.etapa_actual === 'Contratado').length, icon: Award, color: 'text-blue-400', bg: 'bg-[#055098]/10' },
     ];
 
     return (
@@ -167,13 +180,13 @@ const VacanteDetail: React.FC = () => {
                 {/* Columna Izquierda: Detalles */}
                 <div className="space-y-6 lg:col-span-1">
                     {/* Tarjeta de Resumen */}
-                    <div className="bg-[#0d1117] border border-white/5 rounded-3xl p-6 relative overflow-hidden group hover:border-white/10 transition-colors shadow-xl">
+                    <div className="bg-slate-900 border border-white/5 rounded-3xl p-6 relative overflow-hidden group hover:border-white/10 transition-colors shadow-xl">
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                             <Briefcase size={120} />
                         </div>
 
                         <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                            <Target size={14} className="text-indigo-400" />
+                            <Target size={14} className="text-blue-400" />
                             Especificaciones
                         </h3>
 
@@ -245,7 +258,7 @@ const VacanteDetail: React.FC = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: i * 0.1 }}
-                                className="bg-[#0d1117] border border-white/5 rounded-2xl p-4 flex flex-col justify-center shadow-lg"
+                                className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex flex-col justify-center shadow-lg"
                             >
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className={cn("p-2 rounded-lg", stat.bg)}>
@@ -261,10 +274,10 @@ const VacanteDetail: React.FC = () => {
                     </div>
 
                     {/* Tabla de Postulados */}
-                    <div className="bg-[#0d1117] border border-white/5 rounded-3xl overflow-hidden flex flex-col shadow-xl">
+                    <div className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden flex flex-col shadow-xl">
                         <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                             <h3 className="text-sm font-black text-white flex items-center gap-2">
-                                <Users size={16} className="text-indigo-400" />
+                                <Users size={16} className="text-blue-400" />
                                 Trazabilidad de Candidatos
                             </h3>
                             <span className="text-xs font-bold text-gray-500 px-3 py-1 bg-white/5 rounded-full">
@@ -283,7 +296,7 @@ const VacanteDetail: React.FC = () => {
                                 </div>
                             ) : (
                                 <table className="w-full text-left border-collapse">
-                                    <thead className="bg-[#161b22]">
+                                    <thead className="bg-slate-800">
                                         <tr className="text-gray-400 text-[10px] font-black uppercase tracking-widest border-b border-white/5">
                                             <th className="p-4 px-6">Candidato</th>
                                             <th className="p-4">Etapa Actual</th>
@@ -296,18 +309,26 @@ const VacanteDetail: React.FC = () => {
                                         {candidatos.map((c) => (
                                             <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
                                                 <td className="p-4 px-6">
-                                                    <div className="font-bold text-sm text-white">{c.nombre_candidato}</div>
+                                                    <div 
+                                                        className="font-bold text-sm text-white cursor-pointer hover:text-blue-400 transition-colors"
+                                                        onClick={(e) => { e.stopPropagation(); navigate(`/edit-candidato/${c.id}`); }}
+                                                    >
+                                                        {c.nombre_candidato}
+                                                    </div>
                                                     {c.cv_url && (
-                                                        <a href={c.cv_url} target="_blank" rel="noreferrer" className="text-[10px] text-indigo-400 hover:underline mt-0.5 block">
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setCvModalUrl(c.cv_url || ''); }}
+                                                            className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md font-bold mt-1.5 hover:bg-emerald-500/20 transition-all inline-block"
+                                                        >
                                                             Ver Hoja de Vida
-                                                        </a>
+                                                        </button>
                                                     )}
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="p-4" onClick={() => navigate(`/edit-candidato/${c.id}`)}>
                                                     <span className={cn(
                                                         "px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border",
                                                         c.etapa_actual === 'Contratado' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                                                            c.etapa_actual === 'Oferta' ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" :
+                                                            c.etapa_actual === 'Oferta' ? "bg-[#055098]/10 text-blue-400 border-[#055098]/20" :
                                                                 c.etapa_actual === 'Descartado' ? "bg-red-500/10 text-red-400 border-red-500/20" :
                                                                     c.etapa_actual.includes('Entrevista') ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
                                                                         "bg-white/5 text-gray-300 border-white/10"
@@ -315,20 +336,29 @@ const VacanteDetail: React.FC = () => {
                                                         {c.etapa_actual}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-xs font-mono text-gray-500 shrink-0">
+                                                <td className="p-4 text-xs font-mono text-gray-500 shrink-0" onClick={() => navigate(`/edit-candidato/${c.id}`)}>
                                                     {c.fecha_postulacion ? new Date(c.fecha_postulacion).toLocaleDateString() : '—'}
                                                 </td>
-                                                <td className="p-4 text-xs text-gray-400 font-medium">
+                                                <td className="p-4 text-xs text-gray-400 font-medium" onClick={() => navigate(`/edit-candidato/${c.id}`)}>
                                                     {c.fuente_reclutamiento}
                                                 </td>
                                                 <td className="p-4 text-center">
-                                                    <div className={cn(
-                                                        "inline-flex items-center justify-center p-1.5 rounded-lg border",
-                                                        (Number(c.calificacion_tecnica) || 0) >= 4 ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" :
-                                                            (Number(c.calificacion_tecnica) || 0) >= 3 ? "bg-amber-500/5 border-amber-500/20 text-amber-400" :
-                                                                "bg-white/5 border-white/5 text-gray-500"
-                                                    )}>
-                                                        <span className="text-xs font-black w-8">{c.calificacion_tecnica ? Number(c.calificacion_tecnica).toFixed(1) : '—'}</span>
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <div className={cn(
+                                                            "inline-flex items-center justify-center p-1.5 rounded-lg border",
+                                                            (Number(c.calificacion_tecnica) || 0) >= 4 ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400" :
+                                                                (Number(c.calificacion_tecnica) || 0) >= 3 ? "bg-amber-500/5 border-amber-500/20 text-amber-400" :
+                                                                    "bg-white/5 border-white/5 text-gray-500"
+                                                        )}>
+                                                            <span className="text-xs font-black w-8">{c.calificacion_tecnica ? Number(c.calificacion_tecnica).toFixed(1) : '—'}</span>
+                                                        </div>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); navigate(`/edit-candidato/${c.id}`); }}
+                                                            className="p-1.5 rounded-lg bg-[#055098]/10 text-blue-400 hover:bg-[#055098]/20 transition-all ml-2"
+                                                            title="Calificar Candidato"
+                                                        >
+                                                            <Edit2 size={14} />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -341,8 +371,61 @@ const VacanteDetail: React.FC = () => {
 
                 </div>
             </div>
+
+            {/* CV VIEWER MODAL */}
+            {cvModalUrl && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div
+                        onClick={() => setCvModalUrl(null)}
+                        className="absolute inset-0 bg-black/90 backdrop-blur-lg"
+                    />
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className="relative bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                        style={{ width: '90vw', height: '90vh' }}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 py-4 border-b border-white/10 bg-white/[0.02] shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><FileText size={18} /></div>
+                                <div>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Hoja de Vida del Candidato</h3>
+                                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">{cvModalUrl}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <a
+                                    href={cvModalUrl || ''}
+                                    download
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95"
+                                >
+                                    <Download size={14} />
+                                    Descargar
+                                </a>
+                                <button
+                                    onClick={() => setCvModalUrl(null)}
+                                    className="p-2.5 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"
+                                >
+                                    <X size={22} />
+                                </button>
+                            </div>
+                        </div>
+                        {/* PDF Viewer */}
+                        <div className="flex-1 bg-slate-950 p-2">
+                            <iframe
+                                src={cvModalUrl || undefined}
+                                className="w-full h-full rounded-xl border-0"
+                                title="Vista previa de CV"
+                            />
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </motion.div>
     );
 };
 
 export default VacanteDetail;
+

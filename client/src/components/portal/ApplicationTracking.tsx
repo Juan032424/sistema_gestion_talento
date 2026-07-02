@@ -149,7 +149,7 @@ const ApplicationTracking: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#0d1421] to-blue-950 flex items-center justify-center">
                 <div className="text-white text-xl">Cargando...</div>
             </div>
         );
@@ -157,7 +157,7 @@ const ApplicationTracking: React.FC = () => {
 
     if (error || !application || !vacancy) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#0d1421] to-blue-950 flex items-center justify-center p-4">
                 <div className="bg-gradient-to-br from-red-500/20 to-rose-600/20 border border-red-400/30 rounded-3xl p-8 max-w-md text-center">
                     <AlertTriangle className="mx-auto text-red-400 mb-4" size={48} />
                     <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
@@ -168,10 +168,10 @@ const ApplicationTracking: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-4 sm:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#0d1421] to-blue-950 p-4 sm:p-8">
             <div className="max-w-4xl mx-auto space-y-6">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10">
+                <div className="bg-gradient-to-r from-[#055098] to-blue-600 rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/10">
                     <div className="flex items-start justify-between">
                         <div>
                             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
@@ -343,7 +343,7 @@ const ApplicationTracking: React.FC = () => {
                         <button
                             onClick={submitFeedback}
                             disabled={submittingFeedback || (!rating && !feedback)}
-                            className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-[#055098] text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             <MessageCircle size={18} />
                             {submittingFeedback ? 'Enviando...' : 'Enviar Feedback'}
@@ -362,3 +362,4 @@ const ApplicationTracking: React.FC = () => {
 };
 
 export default ApplicationTracking;
+

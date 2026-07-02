@@ -68,6 +68,11 @@ const DataView: React.FC = () => {
     };
 
     const handleVacancySave = async (id: number) => {
+        // Optimistic UI update
+        const previousVacantes = [...vacantes];
+        setVacantes(vacantes.map(v => v.id === id ? { ...v, ...vacancyEditForm } : v));
+        setEditingVacancyId(null);
+
         try {
             // Only send fields that belong to the database table
             const updatePayload = {
@@ -77,11 +82,10 @@ const DataView: React.FC = () => {
             };
 
             await api.put(`/vacantes/${id}`, updatePayload);
-            setEditingVacancyId(null);
-            setEditingVacancyId(null);
-            fetchData();
             showToast("Vacante actualizada correctamente", "success");
         } catch (error) {
+            // Revert on error
+            setVacantes(previousVacantes);
             showToast("Error al actualizar la vacante", "error");
         }
     };
@@ -93,6 +97,11 @@ const DataView: React.FC = () => {
     };
 
     const handleCandidatoSave = async (id: number) => {
+        // Optimistic UI update
+        const previousCandidatos = [...candidatos];
+        setCandidatos(candidatos.map(c => c.id === id ? { ...c, ...candidatoEditForm } : c));
+        setEditingCandidatoId(null);
+
         try {
             const updatePayload = {
                 etapa_actual: candidatoEditForm.etapa_actual,
@@ -109,12 +118,10 @@ const DataView: React.FC = () => {
 
             console.log("NASA Debug: Sending Candidate Update", updatePayload);
             await api.put(`/candidatos/${id}`, updatePayload);
-            setEditingCandidatoId(null);
-            fetchData();
-            setEditingCandidatoId(null);
-            fetchData();
             showToast("Candidato actualizado con éxito", "success");
         } catch (error: any) {
+            // Revert on error
+            setCandidatos(previousCandidatos);
             console.error("NASA Frontend Error Log:", error.response?.data || error);
             showToast("No se pudo actualizar el candidato", "error");
         }
@@ -175,10 +182,6 @@ const DataView: React.FC = () => {
                         <Plus size={14} />
                         Registrar Candidato
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
-                        <Download size={14} />
-                        Exportar Excel
-                    </button>
                 </div>
             </div>
 
@@ -188,21 +191,21 @@ const DataView: React.FC = () => {
                     <LayoutDashboard size={16} />
                     <h3 className="text-xs font-black uppercase tracking-widest">Maestro de Vacantes</h3>
                 </div>
-                <div className="bg-[#161b22] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                <div className="bg-slate-800 border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                     <div className="overflow-x-auto overflow-y-auto max-h-[40vh] custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[1200px]">
                             <thead className="sticky top-0 z-10">
-                                <tr className="bg-[#0d1117] border-b border-white/10 text-gray-400 text-[10px] font-black uppercase tracking-widest">
-                                    <th className="p-4 whitespace-nowrap">Código REQ</th>
-                                    <th className="p-4 whitespace-nowrap">Puesto</th>
-                                    <th className="p-4 whitespace-nowrap">Estado Cubrimiento</th>
-                                    <th className="p-4 whitespace-nowrap">Apertura</th>
-                                    <th className="p-4 whitespace-nowrap">Cierre Estimado</th>
-                                    <th className="p-4 whitespace-nowrap">Cierre Real</th>
-                                    <th className="p-4 whitespace-nowrap text-blue-400">Días Desfase</th>
-                                    <th className="p-4 whitespace-nowrap">SLA Meta</th>
-                                    <th className="p-4 whitespace-nowrap">Costo Vacante</th>
-                                    <th className="p-4 whitespace-nowrap text-right">Acciones</th>
+                                <tr className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Código REQ</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Puesto</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Estado Cubrimiento</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Apertura</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Cierre Estimado</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Cierre Real</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10 text-blue-400">Días Desfase</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">SLA Meta</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Costo Vacante</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -215,7 +218,7 @@ const DataView: React.FC = () => {
                                         <td className="p-4">
                                             {editingVacancyId === v.id ? (
                                                 <select
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={vacancyEditForm.estado}
                                                     onChange={(e) => setVacancyEditForm({ ...vacancyEditForm, estado: e.target.value as any })}
                                                 >
@@ -242,7 +245,7 @@ const DataView: React.FC = () => {
                                             {editingVacancyId === v.id ? (
                                                 <input
                                                     type="date"
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none"
                                                     value={vacancyEditForm.fecha_cierre_real?.substring(0, 10) || ''}
                                                     onChange={(e) => setVacancyEditForm({ ...vacancyEditForm, fecha_cierre_real: e.target.value })}
                                                 />
@@ -264,7 +267,7 @@ const DataView: React.FC = () => {
                                             {editingVacancyId === v.id ? (
                                                 <input
                                                     type="number"
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-24"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-24"
                                                     value={vacancyEditForm.costo_vacante || 0}
                                                     onChange={(e) => setVacancyEditForm({ ...vacancyEditForm, costo_vacante: Number(e.target.value) })}
                                                 />
@@ -296,23 +299,23 @@ const DataView: React.FC = () => {
                     <Users size={16} />
                     <h3 className="text-xs font-black uppercase tracking-widest">Seguimiento de Candidatos (Eficacia)</h3>
                 </div>
-                <div className="bg-[#161b22] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                <div className="bg-slate-800 border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                     <div className="overflow-x-auto overflow-y-auto max-h-[50vh] custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[1500px]">
                             <thead className="sticky top-0 z-10">
-                                <tr className="bg-[#0d1117] border-b border-white/10 text-gray-400 text-[10px] font-black uppercase tracking-widest">
-                                    <th className="p-4 whitespace-nowrap">Nombre Candidato</th>
-                                    <th className="p-4 whitespace-nowrap">Vacante</th>
-                                    <th className="p-4 whitespace-nowrap">Etapa</th>
-                                    <th className="p-4 whitespace-nowrap">Fuente</th>
-                                    <th className="p-4 whitespace-nowrap">HV / CV</th>
-                                    <th className="p-4 whitespace-nowrap">Etdo. Entrevista</th>
-                                    <th className="p-4 whitespace-nowrap">Fecha Entrevista</th>
-                                    <th className="p-4 whitespace-nowrap">Resultado</th>
-                                    <th className="p-4 whitespace-nowrap">Motivo No Apto</th>
-                                    <th className="p-4 whitespace-nowrap">Score Técnico</th>
-                                    <th className="p-4 whitespace-nowrap">Estatus 90 Días</th>
-                                    <th className="p-4 whitespace-nowrap text-right">Acciones</th>
+                                <tr className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Nombre Candidato</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Vacante</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Etapa</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Fuente</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">HV / CV</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Etdo. Entrevista</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Fecha Entrevista</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Resultado</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Motivo No Apto</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Score Técnico</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10">Estatus 90 Días</th>
+                                    <th className="sticky top-0 bg-slate-900 p-4 whitespace-nowrap border-b border-white/10 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -326,7 +329,7 @@ const DataView: React.FC = () => {
                                         <td className="p-4">
                                             {editingCandidatoId === c.id ? (
                                                 <select
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={candidatoEditForm.etapa_actual}
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, etapa_actual: e.target.value })}
                                                 >
@@ -348,7 +351,7 @@ const DataView: React.FC = () => {
                                         <td className="p-4">
                                             {editingCandidatoId === c.id ? (
                                                 <select
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={candidatoEditForm.fuente_reclutamiento}
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, fuente_reclutamiento: e.target.value })}
                                                 >
@@ -367,7 +370,7 @@ const DataView: React.FC = () => {
                                             {editingCandidatoId === c.id ? (
                                                 <input
                                                     type="text"
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={candidatoEditForm.cv_url || ''}
                                                     placeholder="URL Hoja de Vida"
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, cv_url: e.target.value })}
@@ -383,7 +386,7 @@ const DataView: React.FC = () => {
                                         <td className="p-4">
                                             {editingCandidatoId === c.id ? (
                                                 <select
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={candidatoEditForm.estado_entrevista}
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, estado_entrevista: e.target.value as any })}
                                                 >
@@ -403,7 +406,7 @@ const DataView: React.FC = () => {
                                             {editingCandidatoId === c.id ? (
                                                 <input
                                                     type="date"
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none"
                                                     value={candidatoEditForm.fecha_entrevista?.substring(0, 10) || ''}
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, fecha_entrevista: e.target.value })}
                                                 />
@@ -414,7 +417,7 @@ const DataView: React.FC = () => {
                                         <td className="p-4">
                                             {editingCandidatoId === c.id ? (
                                                 <select
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={candidatoEditForm.resultado_candidato || ''}
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, resultado_candidato: e.target.value as any })}
                                                 >
@@ -435,7 +438,7 @@ const DataView: React.FC = () => {
                                             {editingCandidatoId === c.id ? (
                                                 <input
                                                     type="text"
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={candidatoEditForm.motivo_no_apto || ''}
                                                     placeholder="Ej: Falta experiencia"
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, motivo_no_apto: e.target.value })}
@@ -451,7 +454,7 @@ const DataView: React.FC = () => {
                                                     step="0.1"
                                                     max="5"
                                                     min="0"
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-16"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-16"
                                                     value={candidatoEditForm.calificacion_tecnica || 0}
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, calificacion_tecnica: Number(e.target.value) })}
                                                 />
@@ -468,7 +471,7 @@ const DataView: React.FC = () => {
                                         <td className="p-4">
                                             {editingCandidatoId === c.id ? (
                                                 <select
-                                                    className="bg-[#0d1117] border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
+                                                    className="bg-slate-900 border border-white/10 rounded h-8 px-2 text-xs text-white outline-none w-full"
                                                     value={candidatoEditForm.estatus_90_dias || ''}
                                                     onChange={(e) => setCandidatoEditForm({ ...candidatoEditForm, estatus_90_dias: e.target.value as any })}
                                                 >
@@ -506,9 +509,9 @@ const DataView: React.FC = () => {
 
             {/* MODAL REGISTRAR CANDIDATO */}
             {isAddingCandidato && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0a0c10]/80 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-[#161b22] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#0d1117]">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-slate-800 border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-slate-900">
                             <h3 className="text-xl font-bold text-white flex items-center gap-3">
                                 <Plus className="text-indigo-500" />
                                 Registrar Nuevo Candidato
@@ -584,3 +587,4 @@ const DataView: React.FC = () => {
 };
 
 export default DataView;
+

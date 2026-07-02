@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^9.1.2",
     "@raulcifuentes/municipios-colombia": "^1.1.0",
     "axios": "^1.13.3",
     "chart.js": "^4.5.1",
@@ -17,6 +20,7 @@
     "colombia-cities": "^1.0.0",
     "colombia-data-social": "^1.0.1",
     "framer-motion": "^12.34.4",
+    "gsap": "^3.14.2",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",

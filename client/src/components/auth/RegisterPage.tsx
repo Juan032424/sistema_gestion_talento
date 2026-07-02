@@ -46,7 +46,7 @@ const RegisterPage: React.FC = () => {
     return (
         <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
             {/* Left Side - Branding (Same as Login for consistency) */}
-            <div className="hidden lg:flex flex-col justify-center items-center bg-[#0d1117] relative overflow-hidden p-12">
+            <div className="hidden lg:flex flex-col justify-center items-center bg-slate-900 relative overflow-hidden p-12">
                 <div className="absolute inset-0 bg-purple-600/10 z-0"></div>
                 <div className="absolute top-[20%] right-[10%] w-[50%] h-[50%] bg-blue-500/20 rounded-full blur-[120px]"></div>
 
@@ -74,7 +74,7 @@ const RegisterPage: React.FC = () => {
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex flex-col justify-center items-center bg-[#0a0c10] p-8">
+            <div className="flex flex-col justify-center items-center bg-slate-950 p-8">
                 <div className="w-full max-w-md space-y-8">
                     <div className="text-center lg:text-left">
                         <h2 className="text-3xl font-bold text-white tracking-tight">Crear Cuenta</h2>
@@ -98,7 +98,7 @@ const RegisterPage: React.FC = () => {
                                 <input
                                     type="text"
                                     required
-                                    className="block w-full pl-10 pr-3 py-3 bg-[#161b22] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                                    className="block w-full pl-10 pr-3 py-3 bg-slate-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                                     placeholder="Juan Pérez"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
@@ -115,7 +115,7 @@ const RegisterPage: React.FC = () => {
                                 <input
                                     type="email"
                                     required
-                                    className="block w-full pl-10 pr-3 py-3 bg-[#161b22] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                                    className="block w-full pl-10 pr-3 py-3 bg-slate-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                                     placeholder="juan@ejemplo.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -133,7 +133,7 @@ const RegisterPage: React.FC = () => {
                                     <input
                                         type="password"
                                         required
-                                        className="block w-full pl-10 pr-3 py-3 bg-[#161b22] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                                        className="block w-full pl-10 pr-3 py-3 bg-slate-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -145,7 +145,7 @@ const RegisterPage: React.FC = () => {
                                 <input
                                     type="password"
                                     required
-                                    className="block w-full px-4 py-3 bg-[#161b22] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                                    className="block w-full px-4 py-3 bg-slate-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
                                     placeholder="••••••••"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -184,3 +184,4 @@ const RegisterPage: React.FC = () => {
 };
 
 export default RegisterPage;
+

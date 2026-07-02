@@ -104,7 +104,7 @@ const WorkplaceAssistant: React.FC = () => {
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-tr from-[#3a94cc] to-blue-600 rounded-full shadow-[0_0_20px_rgba(58,148,204,0.4)] flex items-center justify-center text-white z-50 hover:scale-110 transition-transform group animate-in fade-in zoom-in duration-300"
+                    className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-tr from-indigo-500 to-blue-600 rounded-full shadow-[0_0_20px_rgba(58,148,204,0.4)] flex items-center justify-center text-white z-50 hover:scale-110 transition-transform group animate-in fade-in zoom-in duration-300"
                 >
                     <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />
                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -116,12 +116,12 @@ const WorkplaceAssistant: React.FC = () => {
 
             {/* Assistant Interface */}
             {isOpen && (
-                <div className="fixed bottom-8 right-8 w-[400px] h-[600px] bg-[#0d1117]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 ring-1 ring-white/10">
+                <div className="fixed bottom-8 right-8 w-[400px] h-[600px] bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 ring-1 ring-white/10">
 
                     {/* Header */}
-                    <div className="h-16 bg-[#161b22] border-b border-white/5 flex items-center justify-between px-4">
+                    <div className="h-16 bg-slate-800 border-b border-white/5 flex items-center justify-between px-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3a94cc] to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                                 <Bot size={18} className="text-white" />
                             </div>
                             <div>
@@ -141,12 +141,12 @@ const WorkplaceAssistant: React.FC = () => {
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex p-1 bg-[#0a0c10] border-b border-white/5">
+                    <div className="flex p-1 bg-slate-950 border-b border-white/5">
                         <button
                             onClick={() => setActiveTab('chat')}
                             className={cn(
                                 "flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2",
-                                activeTab === 'chat' ? "bg-[#161b22] text-white shadow-sm" : "text-gray-500 hover:text-gray-300"
+                                activeTab === 'chat' ? "bg-slate-800 text-white shadow-sm" : "text-gray-500 hover:text-gray-300"
                             )}
                         >
                             <MessageSquare size={14} />
@@ -156,7 +156,7 @@ const WorkplaceAssistant: React.FC = () => {
                             onClick={() => setActiveTab('recommendations')}
                             className={cn(
                                 "flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2",
-                                activeTab === 'recommendations' ? "bg-[#161b22] text-[#3a94cc] shadow-sm" : "text-gray-500 hover:text-gray-300"
+                                activeTab === 'recommendations' ? "bg-slate-800 text-indigo-500 shadow-sm" : "text-gray-500 hover:text-gray-300"
                             )}
                         >
                             <Lightbulb size={14} />
@@ -165,7 +165,7 @@ const WorkplaceAssistant: React.FC = () => {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-hidden relative bg-[#0a0c10]/50">
+                    <div className="flex-1 overflow-hidden relative bg-slate-950/50">
 
                         {/* Chat View */}
                         {activeTab === 'chat' && (
@@ -177,15 +177,15 @@ const WorkplaceAssistant: React.FC = () => {
                                             className={cn(
                                                 "max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed",
                                                 msg.role === 'user'
-                                                    ? "bg-[#3a94cc] text-white self-end ml-auto rounded-tr-sm shadow-md shadow-blue-500/10"
-                                                    : "bg-[#161b22] text-gray-200 self-start mr-auto rounded-tl-sm border border-white/5"
+                                                    ? "bg-indigo-500 text-white self-end ml-auto rounded-tr-sm shadow-md shadow-blue-500/10"
+                                                    : "bg-slate-800 text-gray-200 self-start mr-auto rounded-tl-sm border border-white/5"
                                             )}
                                         >
                                             {msg.content}
                                         </div>
                                     ))}
                                     {isTyping && (
-                                        <div className="bg-[#161b22] self-start rounded-2xl p-3 rounded-tl-sm border border-white/5 flex gap-1">
+                                        <div className="bg-slate-800 self-start rounded-2xl p-3 rounded-tl-sm border border-white/5 flex gap-1">
                                             <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                             <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                             <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -194,7 +194,7 @@ const WorkplaceAssistant: React.FC = () => {
                                     <div ref={messagesEndRef} />
                                 </div>
 
-                                <div className="p-3 bg-[#161b22] border-t border-white/5">
+                                <div className="p-3 bg-slate-800 border-t border-white/5">
                                     <div className="relative flex items-center group">
                                         <input
                                             type="text"
@@ -202,12 +202,12 @@ const WorkplaceAssistant: React.FC = () => {
                                             onChange={(e) => setInputValue(e.target.value)}
                                             onKeyDown={handleKeyDown}
                                             placeholder="Escribe tu pregunta..."
-                                            className="w-full bg-[#0a0c10] border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#3a94cc]/50 focus:ring-1 focus:ring-[#3a94cc]/50 transition-all"
+                                            className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
                                         />
                                         <button
                                             onClick={handleSendMessage}
                                             disabled={!inputValue.trim()}
-                                            className="absolute right-2 p-1.5 bg-[#3a94cc] text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-[#3a94cc] transition-colors shadow-lg shadow-blue-500/20"
+                                            className="absolute right-2 p-1.5 bg-indigo-500 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 disabled:hover:bg-indigo-500 transition-colors shadow-lg shadow-blue-500/20"
                                         >
                                             <Send size={16} />
                                         </button>
@@ -221,7 +221,7 @@ const WorkplaceAssistant: React.FC = () => {
                             <div className="h-full overflow-y-auto p-4 custom-scrollbar space-y-4">
                                 {isLoadingRecs ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-3">
-                                        <Loader2 size={32} className="animate-spin text-[#3a94cc]" />
+                                        <Loader2 size={32} className="animate-spin text-indigo-500" />
                                         <p className="text-xs">Analizando el entorno...</p>
                                     </div>
                                 ) : !recommendations ? (
@@ -230,18 +230,18 @@ const WorkplaceAssistant: React.FC = () => {
                                         <p className="text-xs">No hay recomendaciones por ahora.</p>
                                         <button
                                             onClick={fetchRecommendations}
-                                            className="text-[#3a94cc] text-xs hover:underline"
+                                            className="text-indigo-500 text-xs hover:underline"
                                         >
                                             Reintentar análisis
                                         </button>
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="bg-gradient-to-br from-[#161b22] to-[#0d1117] p-4 rounded-xl border border-[#3a94cc]/20 relative overflow-hidden">
+                                        <div className="bg-gradient-to-br from-[#161b22] to-[#0d1117] p-4 rounded-xl border border-indigo-500/20 relative overflow-hidden">
                                             <div className="absolute top-0 right-0 p-3 opacity-10">
                                                 <Target size={64} />
                                             </div>
-                                            <h4 className="text-sm font-bold text-[#3a94cc] mb-2 uppercase tracking-wider">Estrategia General</h4>
+                                            <h4 className="text-sm font-bold text-indigo-500 mb-2 uppercase tracking-wider">Estrategia General</h4>
                                             <p className="text-xs text-gray-300 leading-relaxed italic">
                                                 "{recommendations.general_strategy || "Enfocarse en vacantes críticas."}"
                                             </p>
@@ -251,16 +251,16 @@ const WorkplaceAssistant: React.FC = () => {
 
                                         <div className="space-y-3">
                                             {recommendations.recommendations?.map((rec, idx) => (
-                                                <div key={idx} className="bg-[#161b22] border border-white/5 rounded-xl p-3 hover:border-[#3a94cc]/30 transition-colors group">
+                                                <div key={idx} className="bg-slate-800 border border-white/5 rounded-xl p-3 hover:border-indigo-500/30 transition-colors group">
                                                     <div className="flex justify-between items-start mb-2">
                                                         <div>
-                                                            <h5 className="text-sm font-bold text-white group-hover:text-[#3a94cc] transition-colors">{rec.vacancy_name}</h5>
+                                                            <h5 className="text-sm font-bold text-white group-hover:text-indigo-500 transition-colors">{rec.vacancy_name}</h5>
                                                             <span className="text-[10px] text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded border border-red-400/20">{rec.issue}</span>
                                                         </div>
                                                     </div>
 
                                                     <div className="flex gap-3 mt-3">
-                                                        <div className="flex-1 bg-[#0a0c10] rounded-lg p-2 border border-white/5">
+                                                        <div className="flex-1 bg-slate-950 rounded-lg p-2 border border-white/5">
                                                             <p className="text-[10px] text-gray-500 mb-1 font-bold uppercase">Acción Sugerida</p>
                                                             <p className="text-xs text-gray-300">{rec.action}</p>
                                                         </div>
@@ -285,3 +285,4 @@ const WorkplaceAssistant: React.FC = () => {
 };
 
 export default WorkplaceAssistant;
+

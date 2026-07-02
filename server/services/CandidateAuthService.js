@@ -7,17 +7,18 @@ const candidateAccountService = require('./candidateAccountService'); // Para de
 class CandidateAuthService {
 
     async register(data) {
-        const { nombre, email, telefono, password, ciudad, titulo_profesional } = data;
+        // Obtenemos identificacion que viene del signup (ahora es PK)
+        const { identificacion, nombre, email, telefono, password, ciudad, titulo_profesional } = data;
 
-        // Check if email already exists in legacy
-        const [existing] = await pool.query(
-            'SELECT id FROM candidatos WHERE email = ?',
-            [email]
-        );
-
-        if (existing.length > 0) {
-            throw new Error('El email ya está registrado');
+        if (!identificacion) {
+            throw new Error('La identificación (Cédula) es requerida');
         }
+
+        // Verificar si la identificacion ya existe (Hoja de Vida de ERP)
+        const [existing] = await pool.query(
+            'SELECT identificacion, password_hash FROM candidatos WHERE identificacion = ?',
+            [identificacion]
+        );
 
         // Check if email exists in new system too (to prevent confusion)
         const [existingNew] = await pool.query(
@@ -32,27 +33,50 @@ class CandidateAuthService {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert candidate
-        const [result] = await pool.query(`
-            INSERT INTO candidatos (
-                nombre, email, telefono, password_hash, ciudad, titulo_profesional,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        `, [nombre, email, telefono, hashedPassword, ciudad, titulo_profesional]);
+        let linked = false;
 
-        const candidateId = result.insertId;
+        if (existing.length > 0) {
+            // Existe en el ERP. Verificamos si ya está vinculado (tiene contraseña)
+            if (existing[0].password_hash) {
+                throw new Error('Esta identificación ya tiene una cuenta registrada en el portal. Inicia sesión.');
+            }
+            
+            // Si no tiene contraseña, fue importado del ERP -> "Vinculamos" la cuenta
+            await pool.query(`
+                UPDATE candidatos
+                SET 
+                    nombre = COALESCE(?, nombre),
+                    email = COALESCE(?, email),
+                    telefono = COALESCE(?, telefono),
+                    password_hash = ?,
+                    ciudad = COALESCE(?, ciudad),
+                    titulo_profesional = COALESCE(?, titulo_profesional),
+                    updated_at = NOW()
+                WHERE identificacion = ?
+            `, [nombre, email, telefono, hashedPassword, ciudad, titulo_profesional, identificacion]);
+            linked = true;
+        } else {
+            // No existe -> Creación de cero
+            await pool.query(`
+                INSERT INTO candidatos (
+                    identificacion, nombre, email, telefono, password_hash, ciudad, titulo_profesional,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            `, [identificacion, nombre, email, telefono, hashedPassword, ciudad, titulo_profesional]);
+        }
 
         // Generate token
         const token = jwt.sign(
-            { id: candidateId, email, type: 'candidate', system: 'legacy' },
+            { id: identificacion, email, type: 'candidate', system: 'legacy' },
             process.env.JWT_SECRET,
             { expiresIn: '30d' }
         );
 
         return {
             token,
+            linked,
             candidate: {
-                id: candidateId,
+                id: identificacion,
                 nombre,
                 email,
                 telefono,
@@ -188,38 +212,42 @@ class CandidateAuthService {
 
     async getMyApplications(candidateId, system = 'legacy') {
         if (system === 'new') {
-            // TODO: Implementar búsqueda en tabla 'applications' o 'postulaciones_agiles' por candidate_account_id
             return [];
         }
-        // Las aplicaciones en postulaciones_agiles se asocian por candidato_id
-        // Si el usuario es del sistema nuevo, sus aplicaciones podrían estar en 'applications' (tabla nueva) o 'postulaciones_agiles'
-        // Por ahora asumimos que el portal público usa 'postulaciones_agiles'.
-        // Pero si el usuario nuevo aplica, ¿dónde se guarda?
 
-        // Revisando PublicJobPortal, usa /api/applications/public (no requiere auth) o similar.
-        // Pero para ver "Mis Aplicaciones", usa este endpoint.
-
-        // Vamos a buscar en ambas tablas por seguridad si es sistema nuevo, 
-        // pero principalmente mantenemos la lógica legacy para 'postulaciones_agiles'.
-
-        // TODO: Unificar historial de aplicaciones.
-
+        /* 
+         * Requerimiento FASE 2: Applications Controller. 
+         * LEFT JOIN cuádruple para mostrar al usuario en qué paso va:
+         * RP (Requisición), RA (Aspirante), RC (Contratación)
+         * - Candidato -> Applications_ERP (RA) -> Vacantes (RP) -> Contracts_ERP (RC)
+         * candidatoId ahora es "identificacion" (string)
+         */
+         
         const [applications] = await pool.query(`
             SELECT 
-                pa.id,
-                pa.estado,
-                pa.auto_match_score,
-                pa.fecha_postulacion,
-                pa.fecha_ultima_actualizacion,
-                v.id as vacancy_id,
+                ae.idu_ra as application_id,
+                ae.resultado_evaluacion,
+                ae.experiencia_requerida,
+                ae.estado_aspirante as estado_ra,
+                ae.fecha_registro as fecha_postulacion,
+                
+                v.idu_rp as vacancy_id,
                 v.puesto_nombre,
-                v.ubicacion,
-                atl.tracking_token
-            FROM postulaciones_agiles pa
-            INNER JOIN vacantes v ON pa.vacante_id = v.id
-            LEFT JOIN application_tracking_links atl ON pa.id = atl.application_id
-            WHERE pa.candidato_id = ?
-            ORDER BY pa.fecha_postulacion DESC
+                v.estado_erp as estado_rp,
+                v.solicitante_nombre,
+                
+                ce.idu_rc as contract_id,
+                ce.estado_vinculacion as estado_rc,
+                ce.emo_pdf,
+                ce.identificacion_pdf,
+                ce.hoja_vida_pdf
+                
+            FROM applications_erp ae
+            LEFT JOIN vacantes v ON ae.idu_rp = v.idu_rp
+            LEFT JOIN contracts_erp ce ON ae.idu_ra = ce.idu_ra
+            LEFT JOIN candidatos c ON ae.candidato_identificacion = c.identificacion
+            WHERE c.identificacion = ?
+            ORDER BY ae.fecha_registro DESC
         `, [candidateId]);
 
         return applications;

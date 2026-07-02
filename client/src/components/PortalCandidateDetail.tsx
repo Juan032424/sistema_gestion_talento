@@ -154,3 +154,4 @@ const PortalCandidateDetail: React.FC = () => {
 };
 
 export default PortalCandidateDetail;
+

@@ -1,25 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Calendar, TrendingUp, Clock, MapPin, DollarSign, Eye, ChevronRight, LogIn } from 'lucide-react';
+import { Briefcase, Calendar, ChevronRight, LogIn } from 'lucide-react';
 import api from '../../api';
 import { useCandidateAuth } from '../../context/CandidateAuthContext';
 
-interface Application {
-    id: number;
-    vacancy_id: number;
-    puesto_nombre: string;
-    empresa: string;
-    ubicacion: string;
-    estado: string;
-    auto_match_score: number;
+interface IErpApplication {
+    application_id: string; // RA
+    resultado_evaluacion: string;
+    experiencia_requerida: string;
+    estado_ra: string;
     fecha_postulacion: string;
-    fecha_ultima_actualizacion: string;
-    tracking_token?: string;
+    
+    vacancy_id: string; // RP
+    puesto_nombre: string;
+    estado_rp: string;
+    solicitante_nombre: string;
+    
+    contract_id?: string; // RC
+    estado_rc?: string;
+    emo_pdf?: string;
+    identificacion_pdf?: string;
+    hoja_vida_pdf?: string;
 }
 
 const MyApplications: React.FC = () => {
-    const [applications, setApplications] = useState<Application[]>([]);
+    const [applications, setApplications] = useState<IErpApplication[]>([]);
     const [loading, setLoading] = useState(true);
-    const { user, isAuthenticated } = useCandidateAuth();
+    const { isAuthenticated } = useCandidateAuth();
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -42,18 +48,25 @@ const MyApplications: React.FC = () => {
         }
     };
 
-    const getEstadoColor = (estado: string) => {
+    const getEstadoColor = (estado: string | undefined) => {
+        if (!estado) return 'from-gray-500/20 to-slate-600/20 border-gray-400/30 text-gray-400';
         switch (estado) {
             case 'Contratado':
+            case 'Regular':
+            case 'Seleccionado':
                 return 'from-green-500/20 to-emerald-600/20 border-green-400/30 text-green-400';
             case 'Entrevista':
             case 'Preseleccionado':
+            case 'En proceso':
                 return 'from-blue-500/20 to-cyan-600/20 border-blue-400/30 text-blue-400';
             case 'En Revisión':
             case 'Nueva':
+            case 'Pendiente':
                 return 'from-yellow-500/20 to-orange-600/20 border-yellow-400/30 text-yellow-400';
             case 'Descartado':
             case 'Retirado':
+            case 'No apto':
+            case 'No Aprobada':
                 return 'from-red-500/20 to-rose-600/20 border-red-400/30 text-red-400';
             default:
                 return 'from-gray-500/20 to-slate-600/20 border-gray-400/30 text-gray-400';
@@ -138,47 +151,82 @@ const MyApplications: React.FC = () => {
                     <div className="grid grid-cols-1 gap-6">
                         {applications.map((app) => (
                             <div
-                                key={app.id}
+                                key={app.application_id}
                                 className="group relative overflow-hidden rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-white/10 hover:border-blue-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/10"
                             >
                                 <div className="p-6">
-                                    <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-start justify-between mb-6">
                                         <div className="flex-1">
                                             <h3 className="text-xl font-bold text-white mb-1">{app.puesto_nombre}</h3>
-                                            <p className="text-gray-400 text-sm">{app.empresa || 'DISCOL SAS'}</p>
+                                            <p className="text-gray-400 text-sm">Proceso: {app.application_id || 'N/A'}</p>
                                         </div>
-                                        <div className={`px-4 py-2 rounded-xl border bg-gradient-to-br ${getEstadoColor(app.estado)} font-semibold text-sm`}>
-                                            {app.estado}
+                                        <div className={`px-4 py-2 rounded-xl border bg-gradient-to-br ${getEstadoColor(app.estado_ra)} font-semibold text-sm`}>
+                                            {app.estado_ra || 'Aplicación'}
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                    {/* Stepper (RP -> RA -> RC) */}
+                                    <div className="mb-8 px-2 relative">
+                                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-800 -z-10 -translate-y-1/2"></div>
+                                        <div className="flex justify-between items-center relative z-10">
+                                            {/* RP - Requisición */}
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${app.vacancy_id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                                                    RP
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-xs font-semibold text-white">{app.vacancy_id || 'Pendiente'}</p>
+                                                    <p className="text-[10px] text-gray-400">{app.estado_rp || 'Requisición'}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className={`flex-1 h-0.5 ${app.application_id ? 'bg-blue-600' : 'bg-transparent'}`}></div>
+
+                                            {/* RA - Registro Aspirante */}
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${app.application_id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                                                    RA
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-xs font-semibold text-white">{app.application_id || 'Pendiente'}</p>
+                                                    <p className="text-[10px] text-gray-400">{app.estado_ra || 'Postulación'}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className={`flex-1 h-0.5 ${app.contract_id ? 'bg-green-500' : 'bg-transparent'}`}></div>
+
+                                            {/* RC - Registro Contratación */}
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${app.contract_id ? 'bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.5)]' : 'bg-slate-800 text-slate-500'}`}>
+                                                    RC
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-xs font-semibold text-white">{app.contract_id || 'Pendiente'}</p>
+                                                    <p className="text-[10px] text-gray-400">{app.estado_rc || 'Vinculación'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
                                         <div className="flex items-center gap-2 text-sm text-gray-400">
                                             <Calendar size={16} className="text-gray-500" />
-                                            <span>{getTimeAgo(app.fecha_postulacion)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                                            <MapPin size={16} className="text-gray-500" />
-                                            <span>{app.ubicacion}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <TrendingUp size={16} className="text-blue-400" />
-                                            <span className="text-blue-400 font-semibold">{app.auto_match_score}% Match</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                                            <Clock size={16} className="text-gray-500" />
-                                            <span>Actualizado {getTimeAgo(app.fecha_ultima_actualizacion)}</span>
+                                            <span>Aplicaste {getTimeAgo(app.fecha_postulacion)}</span>
                                         </div>
                                     </div>
 
-                                    {app.tracking_token && (
-                                        <div className="flex gap-3">
+                                    {/* Action Buttons */}
+                                    {app.contract_id && (
+                                        <div className="flex gap-3 mt-4">
                                             <a
-                                                href={`/track/${app.tracking_token}`}
-                                                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 group/btn"
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    alert('Descargando Documentos de Vinculación...');
+                                                }}
+                                                className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 group/btn"
                                             >
-                                                <Eye size={18} className="group-hover/btn:scale-110 transition-transform" />
-                                                Ver Seguimiento Completo
+                                                Descargar Documentos de Vinculación (RC)
                                             </a>
                                         </div>
                                     )}
@@ -193,3 +241,4 @@ const MyApplications: React.FC = () => {
 };
 
 export default MyApplications;
+

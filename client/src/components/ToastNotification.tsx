@@ -48,9 +48,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         key={toast.id}
                         className={cn(
                             "min-w-[300px] p-4 rounded-xl border shadow-2xl flex items-center gap-3 animate-in slide-in-from-right-full duration-300",
-                            toast.type === 'success' ? "bg-[#0d1117] border-green-500/20 text-white" :
-                                toast.type === 'error' ? "bg-[#0d1117] border-red-500/20 text-white" :
-                                    "bg-[#0d1117] border-blue-500/20 text-white"
+                            toast.type === 'success' ? "bg-slate-900 border-green-500/20 text-white" :
+                                toast.type === 'error' ? "bg-slate-900 border-red-500/20 text-white" :
+                                    "bg-slate-900 border-blue-500/20 text-white"
                         )}
                     >
                         <div className={cn(
@@ -73,3 +73,4 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         </ToastContext.Provider>
     );
 };
+

@@ -15,7 +15,9 @@ const ReferralPortal: React.FC = () => {
     const [formData, setFormData] = useState({
         candidate_name: '',
         candidate_contact: '',
-        vacancy_id: ''
+        vacancy_id: '',
+        referrer_name: '',
+        referrer_cedula: ''
     });
 
     useEffect(() => {
@@ -52,7 +54,13 @@ const ReferralPortal: React.FC = () => {
         e.preventDefault();
         try {
             await api.post('/referidos', formData);
-            setFormData({ candidate_name: '', candidate_contact: '', vacancy_id: '' });
+            setFormData({
+                candidate_name: '',
+                candidate_contact: '',
+                vacancy_id: '',
+                referrer_name: '',
+                referrer_cedula: ''
+            });
             handleCloseModal();
             fetchData();
         } catch (error) {
@@ -158,6 +166,11 @@ const ReferralPortal: React.FC = () => {
                                         <div>
                                             <p className="font-bold text-white">{ref.candidate_name}</p>
                                             <p className="text-xs text-slate-500">Contacto: {ref.candidate_contact}</p>
+                                            {(ref.referrer_name || ref.referrer_cedula) && (
+                                                <p className="text-[10px] text-blue-400 font-medium mt-1">
+                                                    Referido por: <span className="font-bold text-slate-300">{ref.referrer_name || 'N/A'}</span> {ref.referrer_cedula ? `(C.C. ${ref.referrer_cedula})` : ''}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-6">
@@ -218,7 +231,7 @@ const ReferralPortal: React.FC = () => {
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="relative bg-[#161b22] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl"
+                            className="relative bg-slate-800 border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl"
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-black text-white">Nuevo Referido</h3>
@@ -251,12 +264,34 @@ const ReferralPortal: React.FC = () => {
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Nombre de quien refiere</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        value={formData.referrer_name}
+                                        onChange={(e) => setFormData({ ...formData, referrer_name: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                                        placeholder="Ej: Carlos Gómez"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Cédula de quien refiere</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        value={formData.referrer_cedula}
+                                        onChange={(e) => setFormData({ ...formData, referrer_cedula: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                                        placeholder="Ej: 1063..."
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Vacante de Interés</label>
                                     <select
                                         required
                                         value={formData.vacancy_id}
                                         onChange={(e) => setFormData({ ...formData, vacancy_id: e.target.value })}
-                                        className="w-full bg-[#0d1117] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
                                     >
                                         <option value="">Selecciona una vacante</option>
                                         {vacancies.map((v: any) => (
@@ -264,7 +299,7 @@ const ReferralPortal: React.FC = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] transition-all active:scale-95 mt-4">
+                                <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-600 to-[#055098] rounded-xl text-white font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] transition-all active:scale-95 mt-4">
                                     GUARDAR REFERIDO
                                 </button>
                             </form>
@@ -277,3 +312,4 @@ const ReferralPortal: React.FC = () => {
 };
 
 export default ReferralPortal;
+

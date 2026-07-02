@@ -13,9 +13,13 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'sistema_gestion_talento',
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 50,
   queueLimit: 0,
   charset: 'utf8mb4'
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected database pool error:', err);
 });
 
 module.exports = pool;

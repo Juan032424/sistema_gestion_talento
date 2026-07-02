@@ -144,3 +144,4 @@ export const useCandidateAuth = () => {
     }
     return context;
 };
+

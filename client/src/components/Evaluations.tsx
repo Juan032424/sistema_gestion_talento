@@ -91,8 +91,8 @@ const formatMonth = (mes: string) => {
 const getRoleBadge = (rol: string) => {
     const map: Record<string, string> = {
         'Reclutador': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-        'Lider': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-        'Admin': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+        'Lider': 'bg-[#055098]/10 text-blue-400 border-[#055098]/20',
+        'Admin': 'bg-blue-600/10 text-blue-300 border-blue-600/20',
     };
     return map[rol] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
 };
@@ -138,7 +138,7 @@ const MiniBarChart: React.FC<{ data: { mes: string; cerradas: number }[] }> = ({
         <div className="flex items-end gap-1.5 h-16">
             {data.map((d, i) => (
                 <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                    <div className="w-full rounded-sm bg-indigo-500/70 transition-all" style={{ height: `${(d.cerradas / max) * 48}px` }} title={`${formatMonth(d.mes)}: ${d.cerradas}`} />
+                    <div className="w-full rounded-sm bg-[#055098]/70 transition-all" style={{ height: `${(d.cerradas / max) * 48}px` }} title={`${formatMonth(d.mes)}: ${d.cerradas}`} />
                     <span className="text-[8px] text-gray-600 font-bold">{formatMonth(d.mes)}</span>
                 </div>
             ))}
@@ -157,7 +157,7 @@ const MemberCard: React.FC<{ member: MemberMetric; rank: number }> = ({ member, 
 
     const kpis = [
         { label: 'Vacantes Cerradas', value: member.vacantes_cerradas, sub: `de ${member.vacantes_total} total`, icon: CheckCircle2, color: 'text-emerald-400' },
-        { label: 'Tasa de Cierre', value: `${member.tasa_cierre}%`, sub: member.cerradas_mes > 0 ? `${member.cerradas_mes} este mes` : 'Este mes: 0', icon: Target, color: 'text-indigo-400' },
+        { label: 'Tasa de Cierre', value: `${member.tasa_cierre}%`, sub: member.cerradas_mes > 0 ? `${member.cerradas_mes} este mes` : 'Este mes: 0', icon: Target, color: 'text-blue-400' },
         { label: 'Prom. Días Cierre', value: member.prom_dias_cierre ? `${member.prom_dias_cierre}d` : 'N/A', sub: member.a_tiempo > 0 ? `${member.a_tiempo} a tiempo` : 'Sin datos', icon: Clock, color: 'text-amber-400' },
         { label: 'Seguimiento', value: member.actualizados_semana, sub: 'actualiz. esta semana', icon: Activity, color: 'text-blue-400' },
     ];
@@ -167,14 +167,14 @@ const MemberCard: React.FC<{ member: MemberMetric; rank: number }> = ({ member, 
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={cn('bg-[#0d1117] border rounded-2xl overflow-hidden transition-all', colors.ring)}
+            className={cn('bg-slate-900 border rounded-2xl overflow-hidden transition-all', colors.ring)}
         >
             {/* Header */}
             <div className="p-5">
                 <div className="flex items-start gap-4">
                     {/* Rank + Avatar */}
                     <div className="relative flex-shrink-0">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/20 flex items-center justify-center text-sm font-black text-white">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#055098] to-[#04407a] border border-[#055098]/20 flex items-center justify-center text-sm font-black text-white">
                             {initials}
                         </div>
                         {rank <= 3 && (
@@ -245,7 +245,7 @@ const MemberCard: React.FC<{ member: MemberMetric; rank: number }> = ({ member, 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${member.tasa_eficiencia}%` }}
                                 transition={{ duration: 0.8, delay: 0.4 }}
-                                className={cn('h-full rounded-full', member.tasa_eficiencia >= 70 ? 'bg-indigo-500' : member.tasa_eficiencia >= 40 ? 'bg-amber-500' : 'bg-rose-500')}
+                                className={cn('h-full rounded-full', member.tasa_eficiencia >= 70 ? 'bg-[#055098]' : member.tasa_eficiencia >= 40 ? 'bg-amber-500' : 'bg-rose-500')}
                             />
                         </div>
                     </div>
@@ -301,7 +301,7 @@ const MemberCard: React.FC<{ member: MemberMetric; rank: number }> = ({ member, 
                                     <div className="text-[8px] text-gray-600 uppercase font-bold">Candidatos</div>
                                 </div>
                                 <div className="text-center p-2 bg-white/[0.02] rounded-xl">
-                                    <div className="text-base font-black text-indigo-400">{member.con_entrevista}</div>
+                                    <div className="text-base font-black text-blue-400">{member.con_entrevista}</div>
                                     <div className="text-[8px] text-gray-600 uppercase font-bold">Entrevistas</div>
                                 </div>
                                 <div className="text-center p-2 bg-white/[0.02] rounded-xl">
@@ -371,7 +371,7 @@ const Evaluations: React.FC = () => {
         return (
             <div className="flex items-center justify-center h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center animate-pulse">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#055098] to-[#04407a] flex items-center justify-center animate-pulse">
                         <Award size={28} className="text-white" />
                     </div>
                     <p className="text-slate-400 font-bold text-sm">Cargando evaluaciones del equipo...</p>
@@ -387,7 +387,7 @@ const Evaluations: React.FC = () => {
                     <XCircle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
                     <p className="text-white font-bold mb-1">Error al cargar datos</p>
                     <p className="text-gray-500 text-sm mb-4">{error}</p>
-                    <button onClick={fetchData} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold">
+                    <button onClick={fetchData} className="px-4 py-2 bg-[#055098] text-white rounded-xl text-sm font-bold">
                         Reintentar
                     </button>
                 </div>
@@ -401,7 +401,7 @@ const Evaluations: React.FC = () => {
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h1 className="text-2xl font-black text-white flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-indigo-600/30">
+                        <div className="p-2.5 bg-gradient-to-br from-[#055098] to-[#04407a] rounded-xl shadow-lg shadow-[#055098]/30">
                             <Award size={22} className="text-white" />
                         </div>
                         Evaluaciones de Equipo
@@ -424,12 +424,12 @@ const Evaluations: React.FC = () => {
             {summary && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {[
-                        { label: 'Total Vacantes', value: summary.stats.total_vacantes, icon: Database2, color: 'indigo', sub: 'en el sistema' },
+                        { label: 'Total Vacantes', value: summary.stats.total_vacantes, icon: Database2, color: 'blue', sub: 'en el sistema' },
                         { label: 'Cerradas', value: summary.stats.total_cerradas, icon: CheckCircle2, color: 'emerald', sub: 'cubiertas' },
                         { label: 'Abiertas', value: summary.stats.total_abiertas, icon: Clock, color: 'blue', sub: 'en proceso' },
                         { label: 'Vencidas', value: summary.stats.vencidas, icon: AlertTriangle, color: 'rose', sub: 'sin cerrar' },
                         { label: 'Días Promedio', value: summary.stats.prom_dias_cierre ? `${summary.stats.prom_dias_cierre}d` : 'N/A', icon: TrendingUp, color: 'amber', sub: 'cierre promedio' },
-                        { label: 'A Tiempo', value: summary.stats.a_tiempo, icon: Trophy, color: 'violet', sub: 'antes del plazo' },
+                        { label: 'A Tiempo', value: summary.stats.a_tiempo, icon: Trophy, color: 'blue', sub: 'antes del plazo' },
                     ].map((kpi, i) => (
                         <motion.div
                             key={i}
@@ -438,12 +438,10 @@ const Evaluations: React.FC = () => {
                             transition={{ delay: i * 0.05 }}
                             className={cn(
                                 'p-4 rounded-2xl border text-center',
-                                kpi.color === 'indigo' ? 'bg-indigo-500/5 border-indigo-500/20' :
-                                    kpi.color === 'emerald' ? 'bg-emerald-500/5 border-emerald-500/20' :
-                                        kpi.color === 'blue' ? 'bg-blue-500/5 border-blue-500/20' :
-                                            kpi.color === 'rose' ? 'bg-rose-500/5 border-rose-500/20' :
-                                                kpi.color === 'amber' ? 'bg-amber-500/5 border-amber-500/20' :
-                                                    'bg-violet-500/5 border-violet-500/20'
+                                kpi.color === 'emerald' ? 'bg-emerald-500/5 border-emerald-500/20' :
+                                    kpi.color === 'blue' ? 'bg-[#055098]/5 border-[#055098]/20' :
+                                        kpi.color === 'rose' ? 'bg-rose-500/5 border-rose-500/20' :
+                                            'bg-amber-500/5 border-amber-500/20'
                             )}
                         >
                             <div className="text-2xl font-black text-white mb-0.5">{kpi.value}</div>
@@ -458,16 +456,16 @@ const Evaluations: React.FC = () => {
             {summary && summary.monthly_trend.length > 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {/* Trend chart */}
-                    <div className="lg:col-span-2 bg-[#0d1117] border border-white/5 rounded-2xl p-5">
+                    <div className="lg:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-5">
                         <div className="flex items-center gap-2 mb-4">
-                            <BarChart3 size={16} className="text-indigo-400" />
+                            <BarChart3 size={16} className="text-blue-400" />
                             <span className="text-xs font-black text-white uppercase tracking-wider">Vacantes Cerradas — Últimos 6 meses</span>
                         </div>
                         <MiniBarChart data={summary.monthly_trend} />
                     </div>
 
                     {/* Top 3 Podium */}
-                    <div className="bg-[#0d1117] border border-white/5 rounded-2xl p-5">
+                    <div className="bg-slate-900 border border-white/5 rounded-2xl p-5">
                         <div className="flex items-center gap-2 mb-4">
                             <Trophy size={16} className="text-amber-400" />
                             <span className="text-xs font-black text-white uppercase tracking-wider">Top Desempeño</span>
@@ -504,7 +502,7 @@ const Evaluations: React.FC = () => {
                             className={cn(
                                 'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border',
                                 filterRol === rol
-                                    ? 'bg-indigo-600/20 border-indigo-500/40 text-indigo-400'
+                                    ? 'bg-[#055098]/20 border-[#055098]/40 text-blue-400'
                                     : 'bg-white/3 border-white/8 text-gray-500 hover:text-gray-400'
                             )}
                         >
@@ -526,7 +524,7 @@ const Evaluations: React.FC = () => {
                             className={cn(
                                 'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all border',
                                 sortBy === s.key
-                                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/30'
+                                    ? 'bg-[#055098] border-[#055098] text-white shadow-lg shadow-[#055098]/30'
                                     : 'bg-white/3 border-white/8 text-gray-500 hover:text-gray-400'
                             )}
                         >
@@ -538,7 +536,7 @@ const Evaluations: React.FC = () => {
 
             {/* ---- TEAM CARDS ---- */}
             {sortedTeam.length === 0 ? (
-                <div className="text-center py-20 bg-[#0d1117] border border-white/5 rounded-2xl">
+                <div className="text-center py-20 bg-slate-900 border border-white/5 rounded-2xl">
                     <Users className="w-12 h-12 text-gray-700 mx-auto mb-3" />
                     <p className="text-gray-400 font-bold text-sm">No hay integrantes de equipo registrados</p>
                     <p className="text-gray-600 text-xs mt-2">Crea usuarios con rol Reclutador o Lider para ver evaluaciones</p>
@@ -552,12 +550,12 @@ const Evaluations: React.FC = () => {
             )}
 
             {/* ---- FOOTER LEGEND ---- */}
-            <div className="bg-[#0d1117] border border-white/5 rounded-2xl p-4">
+            <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
                 <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3">Cómo se calcula el puntaje de desempeño</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {[
                         { label: 'Tasa de Cierre (40%)', desc: 'Porcentaje de vacantes cerradas sobre el total asignado', color: 'text-emerald-400' },
-                        { label: 'Eficiencia Temporal (30%)', desc: 'Porcentaje de vacantes cerradas antes del plazo estimado', color: 'text-indigo-400' },
+                        { label: 'Eficiencia Temporal (30%)', desc: 'Porcentaje de vacantes cerradas antes del plazo estimado', color: 'text-blue-400' },
                         { label: 'Velocidad de Cierre (30%)', desc: 'Penalización por días promedio altos respecto al estándar (15 días base)', color: 'text-amber-400' },
                     ].map((item, i) => (
                         <div key={i} className="flex gap-2">
@@ -578,3 +576,4 @@ const Evaluations: React.FC = () => {
 const Database2 = BarChart3;
 
 export default Evaluations;
+

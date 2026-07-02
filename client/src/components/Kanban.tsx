@@ -8,14 +8,20 @@ import {
     Clock,
     CheckCircle2,
     Circle,
-    MoreHorizontal
+    MoreHorizontal,
+    Layers,
+    Plus,
+    Activity
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Skeleton } from './ui/Skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from './ToastNotification';
 
 const Kanban: React.FC = () => {
     const [vacantes, setVacantes] = useState<Vacante[]>([]);
     const [loading, setLoading] = useState(true);
+    const { showToast } = useToast();
 
     useEffect(() => {
         api.get('/vacantes').then(res => {
@@ -29,9 +35,9 @@ const Kanban: React.FC = () => {
     }, []);
 
     const columns = [
-        { title: 'Por Abrir / Abierta', status: 'Abierta', color: '#3b82f6', bg: 'bg-blue-500/10' },
-        { title: 'En Proceso Selección', status: 'En Proceso', color: '#8b5cf6', bg: 'bg-purple-500/10' },
-        { title: 'Cerrada / Cubierta', status: 'Cubierta', color: '#10b981', bg: 'bg-green-500/10' }
+        { title: 'Por Abrir / Abierta', status: 'Abierta', color: '#055098', bg: 'bg-[#055098]/10', border: 'border-[#055098]/30', glow: 'shadow-[#055098]/30' },
+        { title: 'En Proceso Selección', status: 'En Proceso', color: '#00d4ff', bg: 'bg-[#00d4ff]/10', border: 'border-[#00d4ff]/30', glow: 'shadow-[#00d4ff]/30' },
+        { title: 'Cerrada / Cubierta', status: 'Cubierta', color: '#10b981', bg: 'bg-[#10b981]/10', border: 'border-[#10b981]/30', glow: 'shadow-[#10b981]/30' }
     ];
 
     if (loading) return (
@@ -40,24 +46,12 @@ const Kanban: React.FC = () => {
                 {columns.map(col => (
                     <div key={col.status} className="flex-1 min-w-[340px] flex flex-col h-full">
                         <div className="flex items-center justify-between mb-5 px-2">
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="w-2 h-2 rounded-full" />
-                                <Skeleton className="h-4 w-40" />
-                            </div>
+                            <Skeleton className="h-6 w-40" />
                             <Skeleton className="h-5 w-8 rounded-full" />
                         </div>
-                        <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar p-3 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div className="flex-1 space-y-4 p-3 rounded-2xl bg-white/[0.02] border border-white/5">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="kanban-card p-6 rounded-xl bg-[#0d1117] border border-white/10">
-                                    <Skeleton className="h-3 w-16 mb-2" />
-                                    <Skeleton className="h-6 w-3/4 mb-4" />
-                                    <Skeleton className="h-4 w-32 mb-2" />
-                                    <Skeleton className="h-4 w-40 mb-4" />
-                                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                        <Skeleton className="h-7 w-24 rounded-full" />
-                                        <Skeleton className="h-6 w-20 rounded-full" />
-                                    </div>
-                                </div>
+                                <Skeleton key={i} className="h-40 w-full rounded-xl" />
                             ))}
                         </div>
                     </div>
@@ -76,136 +70,184 @@ const Kanban: React.FC = () => {
         if (newIndex >= 0 && newIndex < columns.length) {
             const newStatus = columns[newIndex].status;
 
-            // Optimistic update
+            // Optimistic update for holographic fluid motion
             const updatedVacantes = vacantes.map(v =>
                 v.id === vacante.id ? { ...v, estado: newStatus as any } : v
             );
-            setVacantes(updatedVacantes); // Immediate UI feedback
+            setVacantes(updatedVacantes); // The <motion.div layout> handles the flying animation!
 
             try {
-                // Assuming backend accepts partial updates nicely
                 await api.put(`/vacantes/${vacante.id}`, { ...vacante, estado: newStatus });
             } catch (error) {
                 console.error("Error moving card", error);
                 // Revert on error
                 setVacantes(vacantes);
-                alert("Error al mover la vacante. Intente nuevamente.");
+                showToast("Fallo en sincronización. Intentando reconectar...", "error");
             }
         }
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-180px)] overflow-hidden">
-            <div className="flex justify-between items-center mb-4 px-2">
-                <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                    <Layers className="text-[#3a94cc]" />
-                    Tablero de Gestión
-                </h2>
-                <div className="flex gap-2 text-xs text-gray-500">
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/50"></span> Abierta</span>
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-500/20 border border-purple-500/50"></span> En Proceso</span>
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500/20 border border-green-500/50"></span> Cerrada</span>
+        <div className="flex flex-col h-[calc(100vh-150px)] overflow-hidden animate-in fade-in duration-700">
+            {/* HUD HEADER */}
+            <div className="flex justify-between items-end mb-6 px-2">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight flex items-center gap-3 drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]" style={{ color: 'var(--text-primary)' }}>
+                        <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                            <Layers className="text-blue-500" size={24} />
+                        </div>
+                        Sistema Integrado Kanban
+                    </h2>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] mt-2 hidden sm:flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                        <Activity size={12} className="text-emerald-500 animate-pulse" /> Estado del núcleo: Sincronizado
+                    </p>
+                </div>
+
+                {/* Status Legend */}
+                <div className="flex gap-4 text-[10px] font-black uppercase tracking-wider bg-black/20 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/5 shadow-2xl hidden md:flex">
+                    {columns.map(col => (
+                        <span key={col.title} className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                            <span className="w-2 h-2 rounded-full shadow-lg" style={{ backgroundColor: col.color, boxShadow: `0 0 10px ${col.color}` }}></span>
+                            {col.status}
+                        </span>
+                    ))}
                 </div>
             </div>
 
+            {/* HOLOGRAPHIC BOARD */}
             <div className="flex gap-6 h-full overflow-x-auto pb-6 custom-scrollbar px-2 snap-x">
                 {columns.map((col, colIndex) => (
-                    <div key={col.status} className="flex-1 min-w-[340px] flex flex-col h-full group snap-center">
-                        <div className="flex items-center justify-between mb-5 px-2">
-                            <div className="flex items-center gap-2">
-                                <div className={cn("w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]", col.status === 'Abierta' ? "bg-blue-500 text-blue-500" : col.status === 'Cubierta' ? "bg-green-500 text-green-500" : "bg-purple-500 text-purple-500")} />
-                                <h3 className="font-bold text-sm tracking-tight uppercase" style={{ color: 'var(--text-primary)' }}>{col.title}</h3>
+                    <div key={col.status} className="flex-1 min-w-[350px] flex flex-col h-full group snap-center">
+                        
+                        {/* COLUMN HEADER */}
+                        <div className="flex items-center justify-between mb-5 px-3">
+                            <div className="flex items-center gap-3 relative">
+                                {/* Glowing Pulse Indicator */}
+                                <div className="relative flex items-center justify-center w-5 h-5">
+                                    <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: col.color }} />
+                                    <div className="relative w-2.5 h-2.5 rounded-full z-10" style={{ backgroundColor: col.color, boxShadow: `0 0 15px ${col.color}` }} />
+                                </div>
+                                <h3 className="font-black text-sm tracking-widest uppercase truncate" style={{ color: 'var(--text-primary)' }}>
+                                    {col.title}
+                                </h3>
                             </div>
-                            <span className="bg-[#161b22] text-gray-500 text-[10px] font-black px-2 py-0.5 rounded-full border border-white/5 shadow-inner" style={{ backgroundColor: 'var(--bg-panel)', color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }}>
+                            
+                            {/* Counter Badge */}
+                            <span className="text-[11px] font-black px-3 py-1 rounded-full border shadow-inner flex items-center justify-center min-w-[32px] transition-colors"
+                                  style={{ backgroundColor: col.bg, color: col.color, borderColor: col.color }}>
                                 {vacantes.filter(v => v.estado === col.status).length}
                             </span>
                         </div>
 
-                        <div className={cn("flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar p-3 rounded-2xl transition-all duration-300 border backdrop-blur-sm", "bg-white/[0.02] border-white/5 group-hover:bg-white/[0.03] group-hover:border-white/10")}>
-                            {vacantes.filter(v => v.estado === col.status).map(v => (
-                                <div
-                                    key={v.id}
-                                    className="kanban-card group/card relative block"
-                                >
-                                    {/* Quick Actions Overlay (Visible on Hover) */}
-                                    <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                        {/* COLUMN BODY (Glassmorphism container) */}
+                        <div className="flex-1 space-y-4 overflow-y-auto pr-3 custom-scrollbar p-3 rounded-2xl transition-all duration-500 border relative backdrop-blur-md glass-panel"
+                             style={{ backgroundColor: 'var(--bg-panel)', borderColor: 'var(--border-color)' }}>
+                            
+                            {/* Ambient column glow */}
+                            <div className="absolute inset-0 opacity-[0.03] transition-opacity duration-500 rounded-2xl group-hover:opacity-[0.08] pointer-events-none" 
+                                 style={{ background: `linear-gradient(to bottom, ${col.color}, transparent)` }} />
 
-                                        {colIndex > 0 && (
-                                            <button
-                                                onClick={(e) => handleMove(e, v, 'prev')}
-                                                className="p-1.5 rounded-lg bg-[#0d1117]/80 text-gray-400 hover:text-white hover:bg-[#3a94cc] border border-white/10 shadow-lg backdrop-blur"
-                                                title="Mover a etapa anterior"
-                                            >
-                                                <MoreHorizontal size={14} className="rotate-180" /> {/* Using rotate for back arrow simulation if specific icon unavailable */}
-                                            </button>
-                                        )}
-                                        {colIndex < columns.length - 1 && (
-                                            <button
-                                                onClick={(e) => handleMove(e, v, 'next')}
-                                                className="p-1.5 rounded-lg bg-[#0d1117]/80 text-gray-400 hover:text-white hover:bg-[#3a94cc] border border-white/10 shadow-lg backdrop-blur"
-                                                title="Avanzar etapa"
-                                            >
-                                                <MoreHorizontal size={14} />
-                                            </button>
-                                        )}
-                                        <Link to={`/edit-vacante/${v.id}`} className="p-1.5 rounded-lg bg-[#0d1117]/80 text-gray-400 hover:text-white hover:bg-[#3a94cc] border border-white/10 shadow-lg backdrop-blur" title="Editar detalles">
-                                            <Circle size={14} />
-                                        </Link>
-                                    </div>
+                            <AnimatePresence>
+                                {vacantes.filter(v => v.estado === col.status).map(v => (
+                                    <motion.div
+                                        layout
+                                        layoutId={v.id.toString()}
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                        key={v.id}
+                                        className="group/card relative block p-4 rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl overflow-hidden cursor-grab active:cursor-grabbing"
+                                        style={{ 
+                                            backgroundColor: 'var(--bg-card)', 
+                                            borderColor: 'var(--border-color)'
+                                        }}
+                                    >
+                                        {/* Holographic left accent bar */}
+                                        <div className="absolute left-0 top-0 h-full w-1 rounded-l-2xl opacity-70 group-hover/card:opacity-100 transition-all duration-300"
+                                             style={{ backgroundColor: col.color }} />
 
-                                    <div className="flex justify-between items-start mb-4 pr-16 relative">
-                                        <div className="flex flex-col gap-1">
-                                            <span className={cn(
-                                                "text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-1.5",
-                                                v.prioridad === 'Crítica' ? "text-red-500" :
-                                                    v.prioridad === 'Alta' ? "text-amber-500" : "text-gray-500"
-                                            )}>
-                                                <span className={cn("w-1.5 h-1.5 rounded-full", v.prioridad === 'Crítica' ? "bg-red-500 animate-pulse" : "bg-gray-600")}></span>
-                                                {v.prioridad} Priority
-                                            </span>
-                                            <h4 className="font-bold text-white text-md leading-snug group-hover/card:text-[#3a94cc] transition-colors capitalize">
+                                        {/* Quick Actions Overlay (Appears on Hover) */}
+                                        <div className="absolute top-2.5 right-2.5 flex gap-1 z-20 opacity-0 transform translate-x-2 group-hover/card:opacity-100 group-hover/card:translate-x-0 transition-all duration-300">
+                                            {colIndex > 0 && (
+                                                <button onClick={(e) => handleMove(e, v, 'prev')}
+                                                    className="p-1 rounded-lg bg-slate-900/85 text-gray-400 hover:text-white hover:bg-blue-600 border border-white/10 shadow-lg backdrop-blur"
+                                                    title="Mover atrás">
+                                                    <MoreHorizontal size={12} className="rotate-180" />
+                                                </button>
+                                            )}
+                                            {colIndex < columns.length - 1 && (
+                                                <button onClick={(e) => handleMove(e, v, 'next')}
+                                                    className="p-1 rounded-lg bg-slate-900/85 text-gray-400 hover:text-white hover:bg-blue-600 border border-white/10 shadow-lg backdrop-blur"
+                                                    title="Avanzar etapa">
+                                                    <MoreHorizontal size={12} />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Upper Section: Title and Priority Dot */}
+                                        <div className="flex items-start justify-between gap-3 mb-1.5 relative z-10">
+                                            <h4 className="font-extrabold text-sm leading-tight group-hover/card:text-blue-500 transition-colors capitalize tracking-tight flex-1 pr-6" style={{ color: 'var(--text-primary)' }}>
                                                 {v.puesto_nombre}
                                             </h4>
+                                            <span className={cn(
+                                                "w-2 h-2 rounded-full shrink-0 mt-1",
+                                                v.prioridad === 'Crítica' ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse" :
+                                                v.prioridad === 'Alta' ? "bg-amber-500 animate-pulse" : "bg-slate-400"
+                                            )} title={`${v.prioridad} Prioridad`} />
                                         </div>
-                                    </div>
 
-                                    <div className="space-y-3 mb-6">
-                                        <div className="flex items-center gap-2 text-gray-500 text-[11px] font-medium">
-                                            <MapPin size={14} className="text-gray-600" />
-                                            <span>{v.sede_nombre}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-gray-500 text-[11px] font-medium">
-                                            <Clock size={14} className="text-gray-600" />
-                                            <span className={cn(new Date(v.fecha_cierre_estimada) < new Date() && "text-red-400 font-bold")}>
-                                                Expira: {new Date(v.fecha_cierre_estimada).toLocaleDateString()}
+                                        {/* Sub-Header: Requisition Code and Location */}
+                                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-3.5 relative z-10 text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>
+                                            <span className="flex items-center gap-1">
+                                                <MapPin size={10} className="text-slate-400" />
+                                                {v.sede_nombre}
+                                            </span>
+                                            <span className="w-1 h-1 rounded-full bg-slate-400/25" />
+                                            <span className="flex items-center gap-1">
+                                                <Clock size={10} className={cn(new Date(v.fecha_cierre_estimada) < new Date() ? "text-red-500" : "text-slate-400")} />
+                                                <span className={cn(new Date(v.fecha_cierre_estimada) < new Date() && "text-red-500 font-extrabold")}>
+                                                    T-Minus: {new Date(v.fecha_cierre_estimada).toLocaleDateString()}
+                                                </span>
                                             </span>
                                         </div>
-                                    </div>
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600/20 to-indigo-600/20 flex items-center justify-center border border-white/10 ring-1 ring-white/5">
-                                                <User size={12} className="text-blue-400" />
+                                        {/* Bottom Footer: User and Badge */}
+                                        <div className="flex items-center justify-between pt-3 border-t relative z-10" style={{ borderColor: 'var(--border-color)' }}>
+                                            <div className="flex items-center gap-1.5 group/user flex-1 min-w-0 pr-2">
+                                                <div className="w-6 h-6 shrink-0 rounded-full bg-gradient-to-tr from-blue-600/20 to-cyan-400/20 flex items-center justify-center border ring-2 ring-blue-500/5 group-hover/user:ring-blue-500/20 transition-all overflow-hidden" style={{ borderColor: col.color }}>
+                                                    {v.responsable_avatar ? (
+                                                        <img src={`http://localhost:3001${v.responsable_avatar}`} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User size={10} style={{ color: col.color }} />
+                                                    )}
+                                                </div>
+                                                <span className="text-[9px] font-bold truncate max-w-[110px]" style={{ color: 'var(--text-secondary)' }}>
+                                                    {v.responsable_rh}
+                                                </span>
                                             </div>
-                                            <span className="text-[10px] font-bold text-gray-400 truncate max-w-[80px]">{v.responsable_rh}</span>
+                                            
+                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg border shadow-sm transition-colors text-[9px] font-black" style={{ backgroundColor: col.bg, borderColor: col.color, color: col.color }}>
+                                                {v.estado === 'Cubierta' ? <CheckCircle2 size={10} className="text-green-500" /> : <span className="w-1 h-1 rounded-full bg-current shrink-0" />}
+                                                <span className="tracking-widest">
+                                                    {v.codigo_requisicion}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
-                                            {v.estado === 'Cubierta' ? <CheckCircle2 size={12} className="text-green-500" /> : <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
-                                            <span className="text-[9px] font-bold uppercase text-gray-400">{v.codigo_requisicion}</span>
-                                        </div>
-                                    </div>
 
-                                    {/* Hover gradient effect */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent -translate-x-full group-hover/card:animate-shimmer pointer-events-none" />
-                                </div>
-                            ))}
+                                        {/* Shimmer Effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover/card:animate-shimmer pointer-events-none z-0" />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
 
                             {vacantes.filter(v => v.estado === col.status).length === 0 && (
-                                <div className="border-2 border-dashed border-white/5 rounded-xl p-8 flex flex-col items-center justify-center text-center opacity-40 hover:opacity-100 hover:border-white/20 transition-all cursor-pointer group/empty">
-                                    <div className="w-12 h-12 rounded-full bg-white/5 mb-3 flex items-center justify-center group-hover/empty:scale-110 transition-transform">
-                                        <Plus className="text-gray-500 group-hover/empty:text-white" />
+                                <div className="h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center opacity-30 hover:opacity-100 transition-all cursor-pointer group/empty" 
+                                     style={{ borderColor: 'var(--border-color)' }}>
+                                    <div className="w-10 h-10 rounded-full bg-white/5 mb-3 flex items-center justify-center group-hover/empty:scale-110 group-hover/empty:-rotate-90 transition-all">
+                                        <Plus size={20} className="text-gray-500 group-hover/empty:text-white" />
                                     </div>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover/empty:text-gray-300">Crear Vacante</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>Zona Despejada</p>
                                 </div>
                             )}
                         </div>
@@ -215,8 +257,5 @@ const Kanban: React.FC = () => {
         </div>
     );
 };
-
-// Import Layers and Plus icons that were missing
-import { Layers, Plus } from 'lucide-react';
 
 export default Kanban;

@@ -4,11 +4,12 @@ import {
     Shield, Trash2, RefreshCw, Settings, Users,
     Activity, AlertTriangle, CheckCircle, XCircle,
     Download, BarChart3, Server, Key, Globe, Lock,
-    Briefcase, UserX, FileText, Zap,
+    Briefcase, UserX, FileText, Zap, Link, ExternalLink,
     Search, Edit, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider';
 import { useToast } from './ToastNotification';
+import { useConfirm } from './ui/ConfirmModal';
 
 interface SystemStats {
     total_users: number;
@@ -39,14 +40,16 @@ interface Vacante {
 
 interface LogEntry {
     id: number;
-    method: string;
-    url: string;
-    status_code: number;
-    duration_ms: number;
+    user_email: string;
+    entity_name: string;
+    entity_id: string;
+    action: string;
+    changes: any;
+    ip_address: string;
     created_at: string;
 }
 
-type Tab = 'overview' | 'users' | 'vacantes' | 'candidatos' | 'logs' | 'settings';
+type Tab = 'overview' | 'users' | 'vacantes' | 'candidatos' | 'logs' | 'tracking' | 'settings';
 
 const SuperAdminPanel: React.FC = () => {
     const { user } = useAuth();
@@ -58,9 +61,10 @@ const SuperAdminPanel: React.FC = () => {
     const [vacantes, setVacantes] = useState<Vacante[]>([]);
     const [candidatos, setCandidatos] = useState<any[]>([]);
     const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [trackingLinks, setTrackingLinks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: number; name: string } | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: number | string; name: string } | null>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [editRole, setEditRole] = useState('');
 
@@ -136,11 +140,22 @@ const SuperAdminPanel: React.FC = () => {
     const fetchLogs = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.get('/agents/logs');
-            setLogs(Array.isArray(res.data) ? res.data.slice(0, 100) : []);
+            const res = await api.get('/users/audit/logs');
+            setLogs(Array.isArray(res.data) ? res.data.slice(0, 200) : []);
         } catch {
-            // Logs endpoint may not be available, show empty state
+            showToast('Error cargando logs de auditoría', 'error');
             setLogs([]);
+        } finally { setLoading(false); }
+    }, []);
+
+    const fetchTrackingLinks = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/tracking/admin/links');
+            setTrackingLinks(res.data || []);
+        } catch {
+            showToast('Error cargando los links generados', 'error');
+            setTrackingLinks([]);
         } finally { setLoading(false); }
     }, []);
 
@@ -150,6 +165,7 @@ const SuperAdminPanel: React.FC = () => {
         if (activeTab === 'vacantes') fetchVacantes();
         if (activeTab === 'candidatos') fetchCandidatos();
         if (activeTab === 'logs') fetchLogs();
+        if (activeTab === 'tracking') fetchTrackingLinks();
     }, [activeTab]);
 
     const handleDeleteUser = async (id: number) => {
@@ -185,10 +201,28 @@ const SuperAdminPanel: React.FC = () => {
         } finally { setConfirmDelete(null); }
     };
 
+    const handleDeleteLink = async (token: string) => {
+        try {
+            await api.delete(`/tracking/admin/links/${token}`);
+            showToast('✅ Link revocado exitosamente', 'success');
+            setTrackingLinks(l => l.filter(x => x.tracking_token !== token));
+        } catch {
+            showToast('Error al revocar el link', 'error');
+        } finally { setConfirmDelete(null); }
+    };
+
+    const confirmModal = useConfirm();
+
     const handleToggleVacanteState = async (v: Vacante) => {
         if (v.estado !== 'Cubierta') return;
 
-        if (!window.confirm(`¿Estás seguro de reabrir la vacante "${v.puesto_nombre}"?`)) return;
+        const ok = await confirmModal({
+            title: 'Reabrir Vacante',
+            message: `¿Estás seguro de reabrir la vacante "${v.puesto_nombre}"? Esto la marcará como activa nuevamente.`,
+            confirmText: 'Reabrir',
+            variant: 'info',
+        });
+        if (!ok) return;
 
         try {
             await api.put(`/vacantes/${v.id}`, { estado: 'Abierta', fecha_cierre_real: null });
@@ -225,9 +259,10 @@ const SuperAdminPanel: React.FC = () => {
 
     const handleDeleteConfirm = () => {
         if (!confirmDelete) return;
-        if (confirmDelete.type === 'user') handleDeleteUser(confirmDelete.id);
-        if (confirmDelete.type === 'vacante') handleDeleteVacante(confirmDelete.id);
-        if (confirmDelete.type === 'candidato') handleDeleteCandidato(confirmDelete.id);
+        if (confirmDelete.type === 'user') handleDeleteUser(confirmDelete.id as number);
+        if (confirmDelete.type === 'vacante') handleDeleteVacante(confirmDelete.id as number);
+        if (confirmDelete.type === 'candidato') handleDeleteCandidato(confirmDelete.id as number);
+        if (confirmDelete.type === 'link') handleDeleteLink(confirmDelete.id as string);
     };
 
     const filteredUsers = users.filter(u =>
@@ -247,7 +282,8 @@ const SuperAdminPanel: React.FC = () => {
         { id: 'users', label: 'Usuarios', icon: <Users size={15} /> },
         { id: 'vacantes', label: 'Vacantes', icon: <Briefcase size={15} /> },
         { id: 'candidatos', label: 'Candidatos', icon: <UserX size={15} /> },
-        { id: 'logs', label: 'Logs', icon: <Activity size={15} /> },
+        { id: 'logs', label: 'Auditoría', icon: <Activity size={15} /> },
+        { id: 'tracking', label: 'Links Magic', icon: <Link size={15} /> },
         { id: 'settings', label: 'Sistema', icon: <Settings size={15} /> },
     ];
 
@@ -279,7 +315,7 @@ const SuperAdminPanel: React.FC = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-[#0d1117] border border-white/5 rounded-2xl p-1 overflow-x-auto">
+            <div className="flex gap-1 bg-slate-900 border border-white/5 rounded-2xl p-1 overflow-x-auto">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
@@ -301,12 +337,12 @@ const SuperAdminPanel: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                         {[
                             { label: 'Usuarios', value: stats?.total_users ?? '—', icon: <Users size={20} />, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-                            { label: 'Vacantes', value: stats?.total_vacantes ?? '—', icon: <Briefcase size={20} />, color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
+                            { label: 'Vacantes', value: stats?.total_vacantes ?? '—', icon: <Briefcase size={20} />, color: 'text-blue-400', bg: 'bg-[#055098]/10 border-[#055098]/20' },
                             { label: 'Vacantes Abiertas', value: stats?.active_vacantes ?? '—', icon: <Globe size={20} />, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
                             { label: 'Candidatos', value: stats?.total_candidatos ?? '—', icon: <UserX size={20} />, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-                            { label: 'Postulaciones', value: stats?.total_applications ?? '—', icon: <FileText size={20} />, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+                            { label: 'Postulaciones', value: stats?.total_applications ?? '—', icon: <FileText size={20} />, color: 'text-blue-400', bg: 'bg-[#055098]/10 border-[#055098]/20' },
                         ].map((s, i) => (
-                            <div key={i} className={`bg-[#0d1117] border rounded-2xl p-4 ${s.bg}`}>
+                            <div key={i} className={`bg-slate-900 border rounded-2xl p-4 ${s.bg}`}>
                                 <div className={`mb-3 ${s.color}`}>{s.icon}</div>
                                 <div className={`text-3xl font-black ${s.color}`}>{s.value}</div>
                                 <div className="text-gray-500 text-xs mt-1 font-medium">{s.label}</div>
@@ -315,7 +351,7 @@ const SuperAdminPanel: React.FC = () => {
                     </div>
 
                     {/* Quick actions */}
-                    <div className="bg-[#0d1117] border border-white/5 rounded-2xl p-6">
+                    <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
                         <h3 className="text-sm font-black text-white mb-4 flex items-center gap-2">
                             <Zap size={16} className="text-amber-400" />
                             Acciones Rápidas
@@ -323,9 +359,10 @@ const SuperAdminPanel: React.FC = () => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             {[
                                 { label: 'Ver Usuarios', tab: 'users' as Tab, icon: <Users size={16} />, color: 'text-blue-400' },
-                                { label: 'Ver Vacantes', tab: 'vacantes' as Tab, icon: <Briefcase size={16} />, color: 'text-indigo-400' },
+                                { label: 'Ver Vacantes', tab: 'vacantes' as Tab, icon: <Briefcase size={16} />, color: 'text-blue-300' },
                                 { label: 'Ver Candidatos', tab: 'candidatos' as Tab, icon: <UserX size={16} />, color: 'text-amber-400' },
-                                { label: 'Ver Logs', tab: 'logs' as Tab, icon: <Activity size={16} />, color: 'text-emerald-400' },
+                                { label: 'Ver Auditoría', tab: 'logs' as Tab, icon: <Activity size={16} />, color: 'text-emerald-400' },
+                                { label: 'Ver Links', tab: 'tracking' as Tab, icon: <Link size={16} />, color: 'text-blue-300' },
                             ].map((a, i) => (
                                 <button
                                     key={i}
@@ -340,7 +377,7 @@ const SuperAdminPanel: React.FC = () => {
                     </div>
 
                     {/* System Health */}
-                    <div className="bg-[#0d1117] border border-white/5 rounded-2xl p-6">
+                    <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
                         <h3 className="text-sm font-black text-white mb-4 flex items-center gap-2">
                             <Server size={16} className="text-emerald-400" />
                             Estado del Sistema
@@ -373,7 +410,7 @@ const SuperAdminPanel: React.FC = () => {
             {activeTab === 'users' && (
                 <div className="space-y-4">
                     <div className="flex gap-3">
-                        <div className="flex-1 flex items-center gap-2 bg-[#161b22] border border-white/5 rounded-xl px-3 py-2.5">
+                        <div className="flex-1 flex items-center gap-2 bg-slate-800 border border-white/5 rounded-xl px-3 py-2.5">
                             <Search size={15} className="text-gray-500" />
                             <input
                                 type="text"
@@ -388,11 +425,11 @@ const SuperAdminPanel: React.FC = () => {
                     {loading ? (
                         <div className="flex justify-center py-12"><RefreshCw size={20} className="animate-spin text-gray-500" /></div>
                     ) : (
-                        <div className="bg-[#0d1117] border border-white/5 rounded-2xl overflow-hidden">
+                        <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left min-w-[600px]">
                                     <thead>
-                                        <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-widest bg-[#0a0c10]">
+                                        <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-widest bg-slate-950">
                                             <th className="px-4 py-3">Usuario</th>
                                             <th className="px-4 py-3">Email</th>
                                             <th className="px-4 py-3">Rol</th>
@@ -405,7 +442,7 @@ const SuperAdminPanel: React.FC = () => {
                                             <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
+                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-[#055098] flex items-center justify-center text-xs font-bold shrink-0">
                                                             {u.full_name?.charAt(0) || '?'}
                                                         </div>
                                                         <span className="text-sm font-bold text-white">{u.full_name}</span>
@@ -467,7 +504,7 @@ const SuperAdminPanel: React.FC = () => {
             {/* ─── TAB: VACANTES ─── */}
             {activeTab === 'vacantes' && (
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2 bg-[#161b22] border border-white/5 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-2 bg-slate-800 border border-white/5 rounded-xl px-3 py-2.5">
                         <Search size={15} className="text-gray-500" />
                         <input
                             type="text"
@@ -480,11 +517,11 @@ const SuperAdminPanel: React.FC = () => {
                     {loading ? (
                         <div className="flex justify-center py-12"><RefreshCw size={20} className="animate-spin text-gray-500" /></div>
                     ) : (
-                        <div className="bg-[#0d1117] border border-white/5 rounded-2xl overflow-hidden">
+                        <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left min-w-[600px]">
                                     <thead>
-                                        <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-widest bg-[#0a0c10]">
+                                        <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-widest bg-slate-950">
                                             <th className="px-4 py-3">Código</th>
                                             <th className="px-4 py-3">Puesto</th>
                                             <th className="px-4 py-3">Estado</th>
@@ -534,7 +571,7 @@ const SuperAdminPanel: React.FC = () => {
             {/* ─── TAB: CANDIDATOS ─── */}
             {activeTab === 'candidatos' && (
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2 bg-[#161b22] border border-white/5 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-2 bg-slate-800 border border-white/5 rounded-xl px-3 py-2.5">
                         <Search size={15} className="text-gray-500" />
                         <input
                             type="text"
@@ -547,11 +584,11 @@ const SuperAdminPanel: React.FC = () => {
                     {loading ? (
                         <div className="flex justify-center py-12"><RefreshCw size={20} className="animate-spin text-gray-500" /></div>
                     ) : (
-                        <div className="bg-[#0d1117] border border-white/5 rounded-2xl overflow-hidden">
+                        <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left min-w-[500px]">
                                     <thead>
-                                        <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-widest bg-[#0a0c10]">
+                                        <tr className="border-b border-white/5 text-[10px] text-gray-500 uppercase tracking-widest bg-slate-950">
                                             <th className="px-4 py-3">Nombre</th>
                                             <th className="px-4 py-3">Email</th>
                                             <th className="px-4 py-3">Estado</th>
@@ -589,50 +626,151 @@ const SuperAdminPanel: React.FC = () => {
                 </div>
             )}
 
-            {/* ─── TAB: LOGS ─── */}
+            {/* ─── TAB: LOGS / AUDIT ─── */}
             {activeTab === 'logs' && (
-                <div className="bg-[#0d1117] border border-white/5 rounded-2xl overflow-hidden">
+                <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
                     <div className="p-4 border-b border-white/5 flex items-center justify-between">
                         <h3 className="text-sm font-black text-white flex items-center gap-2">
                             <Activity size={15} className="text-emerald-400" />
-                            Logs de Actividad del Sistema
+                            Auditoría de Acciones Forenses
                         </h3>
-                        <span className="text-xs text-gray-500">{logs.length} entradas</span>
+                        <span className="text-xs text-gray-500">{logs.length} eventos</span>
                     </div>
                     {loading ? (
                         <div className="flex justify-center py-12"><RefreshCw size={20} className="animate-spin text-gray-500" /></div>
                     ) : logs.length === 0 ? (
-                        <div className="py-12 text-center text-gray-600 text-sm italic">No hay logs disponibles</div>
+                        <div className="py-12 text-center text-gray-600 text-sm italic">No hay registros de auditoría disponibles</div>
                     ) : (
                         <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
-                            <table className="w-full text-left text-xs min-w-[600px]">
-                                <thead className="sticky top-0 bg-[#0a0c10] border-b border-white/5">
+                            <table className="w-full text-left text-xs min-w-[800px]">
+                                <thead className="sticky top-0 bg-slate-950 border-b border-white/5">
                                     <tr className="text-[10px] text-gray-500 uppercase tracking-widest">
-                                        <th className="px-4 py-2">Tiempo</th>
-                                        <th className="px-4 py-2">Método</th>
-                                        <th className="px-4 py-2">URL</th>
-                                        <th className="px-4 py-2">Status</th>
-                                        <th className="px-4 py-2">Duración</th>
+                                        <th className="px-4 py-2">Fecha/Hora</th>
+                                        <th className="px-4 py-2">Usuario (Responsable)</th>
+                                        <th className="px-4 py-2">Módulo Afectado</th>
+                                        <th className="px-4 py-2">Acción</th>
+                                        <th className="px-4 py-2">Detalle JSON</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/[0.03] font-mono">
                                     {logs.map((log, i) => (
                                         <tr key={i} className="hover:bg-white/[0.02]">
-                                            <td className="px-4 py-2 text-gray-600 whitespace-nowrap">
-                                                {log.created_at ? new Date(log.created_at).toLocaleTimeString('es-CO') : '—'}
+                                            <td className="px-4 py-2 text-gray-500 whitespace-nowrap">
+                                                {log.created_at ? new Date(log.created_at).toLocaleString('es-CO') : '—'}
                                             </td>
                                             <td className="px-4 py-2">
-                                                <span className={`font-bold ${log.method === 'GET' ? 'text-blue-400' : log.method === 'POST' ? 'text-emerald-400' : log.method === 'DELETE' ? 'text-red-400' : 'text-amber-400'}`}>
-                                                    {log.method}
+                                                <span className="font-bold text-blue-400">
+                                                    {log.user_email || 'Sistema (Auto)'}
                                                 </span>
+                                                <div className="text-[9px] text-gray-600 mt-0.5">{log.ip_address || 'IP Oculta'}</div>
                                             </td>
-                                            <td className="px-4 py-2 text-gray-400 truncate max-w-[200px]">{log.url}</td>
                                             <td className="px-4 py-2">
-                                                <span className={`${log.status_code >= 200 && log.status_code < 300 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                    {log.status_code}
+                                                <span className="text-white font-bold">{log.entity_name}</span>
+                                                <span className="text-gray-500 ml-1">#{log.entity_id}</span>
+                                            </td>
+                                            <td className="px-4 py-2">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                                                    log.action === 'CREATE' ? 'bg-emerald-500/10 text-emerald-400' :
+                                                    log.action === 'UPDATE' ? 'bg-amber-500/10 text-amber-400' :
+                                                    log.action === 'DELETE' ? 'bg-red-500/10 text-red-400' :
+                                                    'bg-blue-500/10 text-blue-400'
+                                                }`}>
+                                                    {log.action}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-2 text-gray-600">{log.duration_ms}ms</td>
+                                            <td className="px-4 py-2">
+                                                <div className="text-[9px] text-gray-500 bg-slate-950 p-2 rounded-lg border border-white/5 max-w-[300px] overflow-x-auto">
+                                                    {JSON.stringify(log.changes)}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ─── TAB: TRACKING LINKS ─── */}
+            {activeTab === 'tracking' && (
+                <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
+                    <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                        <h3 className="text-sm font-black text-white flex items-center gap-2">
+                            <Link size={15} className="text-blue-400" />
+                            Control de Magic Links Generados
+                        </h3>
+                        <span className="text-xs text-gray-500">{trackingLinks.length} enlaces activos</span>
+                    </div>
+                    {loading ? (
+                        <div className="flex justify-center py-12"><RefreshCw size={20} className="animate-spin text-gray-500" /></div>
+                    ) : trackingLinks.length === 0 ? (
+                        <div className="py-12 text-center text-gray-600 text-sm italic">No hay links de seguimiento generados todavía</div>
+                    ) : (
+                        <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+                            <table className="w-full text-left text-xs min-w-[1000px]">
+                                <thead className="sticky top-0 bg-slate-950 border-b border-white/5">
+                                    <tr className="text-[10px] text-gray-500 uppercase tracking-widest">
+                                        <th className="px-4 py-3">Fecha Emisión</th>
+                                        <th className="px-4 py-3">Candidato / Vacante</th>
+                                        <th className="px-4 py-3">Estado Tracking</th>
+                                        <th className="px-4 py-3">Vistas</th>
+                                        <th className="px-4 py-3 text-right">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/[0.03] font-mono">
+                                    {trackingLinks.map((tl, i) => (
+                                        <tr key={i} className="hover:bg-white/[0.02]">
+                                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                                {new Date(tl.created_at).toLocaleString('es-CO')}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="font-bold text-white text-sm">{tl.candidato_nombre}</div>
+                                                <div className="text-[10px] text-gray-500 mt-0.5">
+                                                    <span className="text-blue-300">REQ: {tl.codigo_requisicion}</span> - {tl.puesto_nombre}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {new Date(tl.expires_at) < new Date() ? (
+                                                    <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-500 font-bold text-[10px]">Expirado</span>
+                                                ) : (
+                                                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold text-[10px]">Activo</span>
+                                                )}
+                                                <div className="text-[10px] text-gray-500 flex items-center gap-1 mt-1">
+                                                    Token: <span className="text-blue-300 truncate max-w-[80px]">{tl.tracking_token.substring(0,8)}...</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md font-bold text-blue-400">
+                                                        {tl.views_count}
+                                                    </span>
+                                                    {tl.last_viewed_at && (
+                                                        <span className="text-[10px] text-gray-500" title="Última vista">
+                                                            (Últ:{new Date(tl.last_viewed_at).toLocaleDateString()})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <a 
+                                                        href={tl.trackingUrl} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-[#055098]/10 hover:bg-[#055098]/20 text-blue-400 border border-[#055098]/20 rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider"
+                                                    >
+                                                        <ExternalLink size={12} /> Probar Link
+                                                    </a>
+                                                    <button
+                                                        onClick={() => setConfirmDelete({ type: 'link', id: tl.tracking_token, name: `el link de ${tl.candidato_nombre}` })}
+                                                        className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                        title="Revocar/Eliminar link"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -645,7 +783,7 @@ const SuperAdminPanel: React.FC = () => {
             {/* ─── TAB: SETTINGS ─── */}
             {activeTab === 'settings' && (
                 <div className="space-y-4">
-                    <div className="bg-[#0d1117] border border-white/5 rounded-2xl p-6">
+                    <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
                         <h3 className="text-sm font-black text-white mb-4 flex items-center gap-2">
                             <Key size={15} className="text-amber-400" />
                             Información del Sistema
@@ -666,7 +804,7 @@ const SuperAdminPanel: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-[#0d1117] border border-red-500/10 rounded-2xl p-6">
+                    <div className="bg-slate-900 border border-red-500/10 rounded-2xl p-6">
                         <h3 className="text-sm font-black text-red-400 mb-2 flex items-center gap-2">
                             <AlertTriangle size={15} />
                             Zona de Peligro
@@ -694,7 +832,7 @@ const SuperAdminPanel: React.FC = () => {
             {/* ─── MODAL: CONFIRM DELETE ─── */}
             {confirmDelete && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0d1117] border border-red-500/20 rounded-2xl p-6 w-full max-w-md">
+                    <div className="bg-slate-900 border border-red-500/20 rounded-2xl p-6 w-full max-w-md">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-red-500/10 rounded-xl">
                                 <AlertTriangle size={20} className="text-red-400" />
@@ -728,7 +866,7 @@ const SuperAdminPanel: React.FC = () => {
             {/* ─── MODAL: EDIT ROLE ─── */}
             {editingUser && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0d1117] border border-blue-500/20 rounded-2xl p-6 w-full max-w-md">
+                    <div className="bg-slate-900 border border-blue-500/20 rounded-2xl p-6 w-full max-w-md">
                         <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
                             <Edit size={16} className="text-blue-400" />
                             Cambiar Rol — {editingUser.full_name}
@@ -736,7 +874,7 @@ const SuperAdminPanel: React.FC = () => {
                         <select
                             value={editRole}
                             onChange={e => setEditRole(e.target.value)}
-                            className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-white text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                            className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                         >
                             {['Superadmin', 'Admin', 'Reclutador', 'Lider'].map(r => (
                                 <option key={r} value={r}>{r}</option>
@@ -764,3 +902,4 @@ const SuperAdminPanel: React.FC = () => {
 };
 
 export default SuperAdminPanel;
+

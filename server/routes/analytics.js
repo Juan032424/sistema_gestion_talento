@@ -38,9 +38,11 @@ router.get('/quality-speed', async (req, res) => {
             SELECT 
                 v.puesto_nombre,
                 DATEDIFF(IFNULL(v.fecha_cierre_real, CURDATE()), v.fecha_apertura) as days_to_close,
-                (SELECT AVG(puntaje_calidad) FROM evaluacion_servicio_gh ev WHERE ev.vacante_id = v.id) as quality_score
+                AVG(ev.puntaje_calidad) as quality_score
             FROM vacantes v
+            LEFT JOIN evaluacion_servicio_gh ev ON ev.vacante_id = v.id
             WHERE v.estado = 'Cubierta'
+            GROUP BY v.id, v.puesto_nombre, v.fecha_cierre_real, v.fecha_apertura
         `);
         res.json(rows);
     } catch (error) {
@@ -59,25 +61,23 @@ router.get('/hot-vacancies', async (req, res) => {
                 v.responsable_rh,
                 pjp.views_count as total_views,
                 pjp.applications_count,
-                (
-                    SELECT COUNT(DISTINCT candidate_id) 
-                    FROM candidate_activity_logs 
-                    WHERE related_id = v.id AND activity_type = 'VIEW_JOB'
-                ) as unique_candidate_views,
-                (
-                    SELECT COUNT(*) 
-                    FROM candidate_activity_logs 
-                    WHERE related_id = v.id AND activity_type = 'SAVE_JOB'
-                ) as saves_count,
-                (
-                    SELECT COUNT(*) 
-                    FROM candidate_activity_logs 
-                    WHERE related_id = v.id AND activity_type = 'START_APPLICATION'
-                ) as intent_to_apply_count
+                IFNULL(cal.unique_candidate_views, 0) as unique_candidate_views,
+                IFNULL(cal.saves_count, 0) as saves_count,
+                IFNULL(cal.intent_to_apply_count, 0) as intent_to_apply_count
             FROM vacantes v
             JOIN public_job_postings pjp ON v.id = pjp.vacante_id
+            LEFT JOIN (
+                SELECT 
+                    related_id,
+                    COUNT(DISTINCT CASE WHEN activity_type = 'VIEW_JOB' THEN candidate_id END) as unique_candidate_views,
+                    SUM(CASE WHEN activity_type = 'SAVE_JOB' THEN 1 ELSE 0 END) as saves_count,
+                    SUM(CASE WHEN activity_type = 'START_APPLICATION' THEN 1 ELSE 0 END) as intent_to_apply_count
+                FROM candidate_activity_logs
+                WHERE activity_type IN ('VIEW_JOB', 'SAVE_JOB', 'START_APPLICATION')
+                GROUP BY related_id
+            ) cal ON v.id = cal.related_id
             WHERE v.estado IN ('Abierta', 'En Proceso')
-            ORDER BY (pjp.views_count + (unique_candidate_views * 2) + (intent_to_apply_count * 5)) DESC
+            ORDER BY (pjp.views_count + (IFNULL(cal.unique_candidate_views, 0) * 2) + (IFNULL(cal.intent_to_apply_count, 0) * 5)) DESC
             LIMIT 10
         `;
         const [rows] = await pool.query(query);

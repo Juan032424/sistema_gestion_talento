@@ -87,7 +87,7 @@ const AdminNotificationPanel: React.FC<{
     };
 
     return (
-        <div className="absolute top-full right-0 mt-4 w-96 bg-[#0d1117] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full right-0 mt-4 w-96 bg-slate-900 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
                 <div className="flex items-center gap-2">
                     <Bell size={16} className="text-blue-400" />
@@ -105,7 +105,7 @@ const AdminNotificationPanel: React.FC<{
                     {selectedPreview && (
                         <motion.div
                             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-                            className="absolute inset-0 bg-[#0d1117] z-50 flex flex-col p-6"
+                            className="absolute inset-0 bg-slate-900 z-50 flex flex-col p-6"
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest">Vista Previa</span>
@@ -144,7 +144,7 @@ const AdminNotificationPanel: React.FC<{
                                 <div className="mt-6 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
                                     <p className="text-[10px] uppercase font-black text-gray-500 tracking-widest mb-1">Vacante:</p>
                                     <p className="text-xs font-bold text-white">{selectedPreview.vacante.puesto}</p>
-                                    <p className="text-[10px] text-[#3a94cc] font-mono mt-0.5">{selectedPreview.vacante.codigo}</p>
+                                    <p className="text-[10px] text-indigo-500 font-mono mt-0.5">{selectedPreview.vacante.codigo}</p>
                                 </div>
                             </div>
 
@@ -198,7 +198,7 @@ const AdminNotificationPanel: React.FC<{
                     </div>
                 ) : (
                     <div className="p-12 text-center bg-white/[0.01]">
-                        <div className="w-16 h-16 bg-[#161b22] border border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <div className="w-16 h-16 bg-slate-800 border border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="text-gray-700" size={32} />
                         </div>
                         <h4 className="text-sm font-bold text-gray-400">Todo al día</h4>
@@ -232,3 +232,4 @@ const DetailItem: React.FC<{ icon: React.ReactNode, label: string, value: string
 );
 
 export default AdminNotificationPanel;
+

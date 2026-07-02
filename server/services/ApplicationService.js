@@ -51,7 +51,7 @@ class ApplicationService {
                     try {
                         const [result] = await pool.query(
                             `INSERT INTO candidatos 
-                            (nombre, email, telefono, titulo_profesional, experiencia_total_anos, 
+                            (primer_nombre, email, telefono, titulo_profesional, experiencia_total_anos, 
                              fuente, etapa, estado, created_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
                             [
@@ -317,7 +317,7 @@ class ApplicationService {
             let query = `
                 SELECT a.*, 
                        v.puesto_nombre,
-                       c.nombre as candidato_nombre_interno
+                       CONCAT_WS(' ', c.primer_nombre, c.segundo_nombre, c.primer_apellido, c.segundo_apellido) as candidato_nombre_interno
                 FROM applications a
                 LEFT JOIN vacantes v ON a.vacante_id = v.id
                 LEFT JOIN candidatos c ON a.candidato_id = c.id

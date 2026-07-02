@@ -21,6 +21,8 @@ const CandidateAuthModal: React.FC<CandidateAuthModalProps> = ({ isOpen, onClose
     });
 
     const [registerData, setRegisterData] = useState({
+        identificacion: '',
+        tipo_id: 'Cédula',
         nombre: '',
         email: '',
         telefono: '',
@@ -28,6 +30,12 @@ const CandidateAuthModal: React.FC<CandidateAuthModalProps> = ({ isOpen, onClose
         ciudad: '',
         titulo_profesional: ''
     });
+
+    const handleIdentificacionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Máscara: solo números
+        const value = e.target.value.replace(/\D/g, '');
+        setRegisterData({ ...registerData, identificacion: value });
+    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -205,6 +213,41 @@ const CandidateAuthModal: React.FC<CandidateAuthModalProps> = ({ isOpen, onClose
                         </form>
                     ) : (
                         <form onSubmit={handleRegister} className="space-y-4">
+                            {/* Documento de Identidad (Nuevo) */}
+                            <div className="grid grid-cols-[1fr_2fr] gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                        Tipo Doc
+                                    </label>
+                                    <select
+                                        value={registerData.tipo_id}
+                                        onChange={(e) => setRegisterData({ ...registerData, tipo_id: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjYgOSAxMiAxNSAxOCA5Ij48L3BvbHlsaW5lPjwvc3ZnPg==')] bg-no-repeat bg-[position:right_10px_center] bg-[length:16px]"
+                                    >
+                                        <option value="Cédula">Cédula (CC)</option>
+                                        <option value="Cedula Extrajeria">Cédula Ext. (CE)</option>
+                                        <option value="Pasaporte">Pasaporte (PA)</option>
+                                        <option value="Tarjeta Identidad">Tarjeta de Id. (TI)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                        Número de Identificación
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            required
+                                            maxLength={15}
+                                            value={registerData.identificacion}
+                                            onChange={handleIdentificacionChange}
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-mono tracking-wider"
+                                            placeholder="1234567890"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Nombre */}
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
@@ -338,3 +381,4 @@ const CandidateAuthModal: React.FC<CandidateAuthModalProps> = ({ isOpen, onClose
 };
 
 export default CandidateAuthModal;
+

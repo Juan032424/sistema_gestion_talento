@@ -58,7 +58,7 @@ const ActivityLogViewer: React.FC<ActivityLogsProps> = ({ candidateTrackingId })
     const getIcon = (type: string) => {
         switch (type) {
             case 'LOGIN': return <LogIn size={16} className="text-blue-400" />;
-            case 'VIEW_JOB': return <Layout size={16} className="text-indigo-400" />;
+            case 'VIEW_JOB': return <Layout size={16} className="text-blue-400" />;
             case 'APPLY': return <Briefcase size={16} className="text-emerald-400" />;
             case 'UPDATE_PROFILE': return <UserCircle size={16} className="text-amber-400" />;
             case 'SAVE_JOB': return <Star size={16} className="text-yellow-400" />;
@@ -93,7 +93,7 @@ const ActivityLogViewer: React.FC<ActivityLogsProps> = ({ candidateTrackingId })
             <div className={cn(
                 "relative overflow-hidden rounded-2xl border transition-all duration-500",
                 analysis
-                    ? "bg-indigo-600/5 border-indigo-500/20 shadow-[0_0_40px_rgba(99,102,241,0.1)]"
+                    ? "bg-[#055098]/5 border-[#055098]/20 shadow-[0_0_40px_rgba(5,80,152,0.1)]"
                     : "bg-slate-900/40 border-white/5"
             )}>
                 {/* Header with Sparkles if analyzed */}
@@ -101,7 +101,7 @@ const ActivityLogViewer: React.FC<ActivityLogsProps> = ({ candidateTrackingId })
                     <div className="flex items-center gap-3">
                         <div className={cn(
                             "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                            analysis ? "bg-indigo-600 text-white" : "bg-slate-800 text-gray-400"
+                            analysis ? "bg-[#055098] text-white" : "bg-slate-800 text-gray-400"
                         )}>
                             <Bot size={18} className={analyzing ? "animate-bounce" : ""} />
                         </div>
@@ -117,8 +117,8 @@ const ActivityLogViewer: React.FC<ActivityLogsProps> = ({ candidateTrackingId })
                         className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                             analyzing
-                                ? "bg-indigo-600/20 text-indigo-400 cursor-wait"
-                                : "bg-indigo-600 text-white hover:bg-indigo-500 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-600/20"
+                                ? "bg-[#055098]/20 text-blue-400 cursor-wait"
+                                : "bg-[#055098] text-white hover:bg-[#0661b8] hover:scale-105 active:scale-95 shadow-lg shadow-[#055098]/20"
                         )}
                     >
                         {analyzing ? (
@@ -138,14 +138,14 @@ const ActivityLogViewer: React.FC<ActivityLogsProps> = ({ candidateTrackingId })
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="md:col-span-2 space-y-4">
                                 <div>
-                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 block">Resumen de Comportamiento</span>
+                                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 block">Resumen de Comportamiento</span>
                                     <p className="text-sm text-gray-300 leading-relaxed font-medium">
                                         {analysis.summary}
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {analysis.key_patterns.map((pattern, idx) => (
-                                        <span key={idx} className="px-2 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-md text-[9px] font-bold text-indigo-300">
+                                        <span key={idx} className="px-2 py-1 bg-[#055098]/10 border border-[#055098]/20 rounded-md text-[9px] font-bold text-blue-300">
                                             #{pattern}
                                         </span>
                                     ))}
@@ -179,10 +179,10 @@ const ActivityLogViewer: React.FC<ActivityLogsProps> = ({ candidateTrackingId })
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-indigo-600/10 border border-indigo-500/20 rounded-xl">
+                                <div className="p-4 bg-[#055098]/10 border border-[#055098]/20 rounded-xl">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <AlertCircle size={14} className="text-indigo-400" />
-                                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Recomendación IA</span>
+                                        <AlertCircle size={14} className="text-blue-400" />
+                                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Recomendación IA</span>
                                     </div>
                                     <p className="text-[11px] text-white font-bold leading-tight">
                                         {analysis.recommendation}
@@ -253,3 +253,4 @@ const ActivityLogViewer: React.FC<ActivityLogsProps> = ({ candidateTrackingId })
 };
 
 export default ActivityLogViewer;
+

@@ -213,3 +213,4 @@ const SavedJobs: React.FC = () => {
 };
 
 export default SavedJobs;
+

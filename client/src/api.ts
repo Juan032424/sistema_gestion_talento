@@ -35,8 +35,12 @@ api.interceptors.response.use(
             || error.message
             || 'Ha ocurrido un error desconocido';
 
-        // Si el token es inválido, ha expirado, o no hay permisos, cerramos sesión automáticamente
-        if (error.response?.status === 401 || error.response?.status === 403) {
+        // Si el token es inválido, ha expirado, o no hay permisos, cerramos sesión automáticamente.
+        // Excepto si es una petición de login o si ya estamos en la página de login.
+        const isLoginRequest = error.config?.url?.includes('/auth/login');
+        const isLoginPath = window.location.pathname === '/login';
+
+        if ((error.response?.status === 401 || error.response?.status === 403) && !isLoginRequest && !isLoginPath) {
             console.warn('Sesión inválida o expirada. Redirigiendo al login...');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -46,14 +50,12 @@ api.interceptors.response.use(
 
         // You can integrate with ToastNotification here if needed
         // For now, we'll just enhance the error object
-        const enhancedError = {
-            ...error,
-            userMessage: message,
-            statusCode: error.response?.status || 500,
-        };
+        error.userMessage = message;
+        error.statusCode = error.response?.status || 500;
 
-        return Promise.reject(enhancedError);
+        return Promise.reject(error);
     }
 );
 
 export default api;
+

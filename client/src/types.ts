@@ -27,6 +27,8 @@ export interface Vacante {
     proyecto_nombre?: string;
     centro_nombre?: string;
     subcentro_nombre?: string;
+    periodo?: string;
+    responsable_avatar?: string | null;
 }
 
 export interface Candidato {
@@ -74,3 +76,4 @@ export interface Stats {
     totalFinancialImpact: string;
     geoDistribution: Array<{ sede: string, count: number }>;
 }
+

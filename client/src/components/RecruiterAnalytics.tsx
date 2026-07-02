@@ -6,7 +6,8 @@ import {
     Clock,
     DollarSign,
     Users,
-    Activity
+    Activity,
+    Wallet
 } from 'lucide-react';
 import api from '../api';
 import { cn } from '../lib/utils';
@@ -79,11 +80,11 @@ const RecruiterAnalytics: React.FC = () => {
             {/* Header Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard
-                    title="Impacto Financiero Total"
-                    value={`$${new Intl.NumberFormat().format(stats.totalFinancialImpact || 0)}`}
-                    subtitle="Pérdida por vacantes críticas"
-                    icon={<DollarSign className="text-red-400" />}
-                    trend="alert"
+                    title="Inversión Ejecutada"
+                    value={`$${new Intl.NumberFormat().format(stats.totalInvestment || 0)}`}
+                    subtitle="Costos directos de selección"
+                    icon={<Wallet className="text-green-400" />}
+                    trend="success"
                 />
                 <MetricCard
                     title="Time-to-Fill Promedio"
@@ -100,12 +101,52 @@ const RecruiterAnalytics: React.FC = () => {
                     trend="success"
                 />
                 <MetricCard
-                    title="Workload Promedio"
+                    title="Pérdida por Demora"
+                    value={`$${new Intl.NumberFormat().format(stats.totalLoss || 0)}`}
+                    subtitle="Productividad no generada"
+                    icon={<TrendingDown className="text-red-400" />}
+                    trend="alert"
+                />
+                <MetricCard
+                    title="Workload Activo"
                     value={(stats.openCount / (stats.recruiterWorkload?.length || 1)).toFixed(1)}
                     subtitle="Vacantes por reclutador"
-                    icon={<Activity className="text-indigo-400" />}
+                    icon={<Activity className="text-blue-400" />}
                     trend="neutral"
                 />
+            </div>
+
+            {/* Financial Impact Breakdown by State */}
+            <div className="glass-card p-6 border-l-4 border-l-blue-500">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <DollarSign size={20} className="text-blue-500" />
+                            Impacto Financiero por Estado del Proceso
+                        </h3>
+                        <p className="text-xs text-gray-500">Distribución de inversión y riesgo según el estado de la vacante</p>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {Object.entries(stats.impactByState || {}).map(([state, amount]: [string, any]) => (
+                        <div key={state} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-blue-500/30 transition-all">
+                            <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{state}</div>
+                            <div className="text-lg font-bold text-white">${new Intl.NumberFormat().format(amount)}</div>
+                            <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                                <div 
+                                    className={cn(
+                                        "h-full rounded-full",
+                                        state === 'Cubierta' ? "bg-green-500" :
+                                        state === 'En Proceso' ? "bg-blue-500" :
+                                        state === 'Abierta' ? "bg-amber-500" : "bg-gray-500"
+                                    )}
+                                    style={{ width: `${(amount / (stats.totalFinancialImpact || 1)) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -234,10 +275,11 @@ const MetricCard: React.FC<{ title: string, value: string, subtitle: string, ico
             <span className="text-[10px] text-gray-500 italic">{subtitle}</span>
             <div className={cn(
                 "w-2 h-2 rounded-full",
-                trend === 'success' ? "bg-green-500" : trend === 'alert' ? "bg-red-500 animate-pulse" : "bg-blue-500"
+                trend === 'success' ? "bg-green-500" : trend === 'alert' ? "bg-red-500 animate-pulse" : "bg-[#055098]"
             )} />
         </div>
     </div>
 );
 
 export default RecruiterAnalytics;
+

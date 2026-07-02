@@ -13,6 +13,7 @@ import {
 import api from '../api';
 import type { Empresa, Sede } from '../types';
 import { cn } from '../lib/utils';
+import { useConfirm } from './ui/ConfirmModal';
 
 const EmpresaSedeConfig: React.FC = () => {
     const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -85,8 +86,16 @@ const EmpresaSedeConfig: React.FC = () => {
         }
     };
 
+    const confirm = useConfirm();
+
     const handleDeleteEmpresa = async (id: number) => {
-        if (!confirm('¿Estás seguro de eliminar esta empresa? Esto podría afectar a las sedes relacionadas.')) return;
+        const ok = await confirm({
+            title: 'Eliminar Empresa',
+            message: '¿Estás seguro de eliminar esta empresa? Esto podría afectar a las sedes relacionadas.',
+            confirmText: 'Eliminar',
+            variant: 'danger',
+        });
+        if (!ok) return;
         try {
             await api.delete(`/empresas/${id}`);
             fetchData();
@@ -96,7 +105,13 @@ const EmpresaSedeConfig: React.FC = () => {
     };
 
     const handleDeleteSede = async (id: number) => {
-        if (!confirm('¿Estás seguro de eliminar esta sede?')) return;
+        const ok = await confirm({
+            title: 'Eliminar Sede',
+            message: '¿Estás seguro de eliminar esta sede? Esta acción no se puede deshacer.',
+            confirmText: 'Eliminar',
+            variant: 'danger',
+        });
+        if (!ok) return;
         try {
             await api.delete(`/sedes/${id}`);
             fetchData();
@@ -115,7 +130,7 @@ const EmpresaSedeConfig: React.FC = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex p-1 bg-[#161b22] border border-white/5 rounded-xl w-fit">
+            <div className="flex p-1 bg-slate-800 border border-white/5 rounded-xl w-fit">
                 <button
                     onClick={() => setActiveTab('empresas')}
                     className={cn(
@@ -193,10 +208,10 @@ const EmpresaSedeConfig: React.FC = () => {
                     {/* Add Sede Card */}
                     <button
                         onClick={() => { setCurrentSede({}); setShowSedeModal(true); }}
-                        className="group flex flex-col items-center justify-center gap-4 p-8 border-2 border-dashed border-white/5 rounded-3xl hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all outline-none h-64"
+                        className="group flex flex-col items-center justify-center gap-4 p-8 border-2 border-dashed border-white/5 rounded-3xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all outline-none h-64"
                     >
-                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-indigo-500/20 group-hover:scale-110 transition-all">
-                            <Plus className="text-gray-400 group-hover:text-indigo-500" size={28} />
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-blue-500/20 group-hover:scale-110 transition-all">
+                            <Plus className="text-gray-400 group-hover:text-blue-500" size={28} />
                         </div>
                         <div className="text-center">
                             <span className="block text-lg font-semibold text-gray-300 group-hover:text-white transition-colors">Nueva Sede</span>
@@ -207,8 +222,8 @@ const EmpresaSedeConfig: React.FC = () => {
                     {sedes.map(sede => (
                         <div key={sede.id} className="glass-card p-6 flex flex-col h-64 group">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="p-3 bg-indigo-500/10 rounded-xl">
-                                    <MapPin className="text-indigo-500" size={24} />
+                                <div className="p-3 bg-blue-500/10 rounded-xl">
+                                    <MapPin className="text-blue-500" size={24} />
                                 </div>
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
@@ -226,7 +241,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                 </div>
                             </div>
                             <h3 className="text-xl font-bold text-white mb-1">{sede.nombre}</h3>
-                            <p className="text-sm text-indigo-400 font-medium mb-1">{sede.empresa_nombre}</p>
+                            <p className="text-sm text-blue-400 font-medium mb-1">{sede.empresa_nombre}</p>
                             <p className="text-xs text-gray-500 truncate">{sede.direccion || 'Sin dirección'}</p>
 
                             <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
@@ -240,7 +255,7 @@ const EmpresaSedeConfig: React.FC = () => {
             {/* Empresa Modal */}
             {showEmpresaModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[#0d1117] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
                             <h2 className="text-xl font-bold text-white flex items-center gap-3">
                                 <Building2 className="text-blue-500" />
@@ -260,7 +275,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                     <select
                                         value={copyFromId}
                                         onChange={(e) => setCopyFromId(e.target.value)}
-                                        className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white appearance-none"
+                                        className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white appearance-none"
                                     >
                                         <option value="">Ninguna (Empezar de cero)</option>
                                         {empresas.map(e => (
@@ -280,7 +295,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                     required
                                     value={currentEmpresa.nombre || ''}
                                     onChange={(e) => setCurrentEmpresa({ ...currentEmpresa, nombre: e.target.value })}
-                                    className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
+                                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
                                     placeholder="Ej: DISCOL SAS"
                                 />
                             </div>
@@ -292,7 +307,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                         type="text"
                                         value={currentEmpresa.nit || ''}
                                         onChange={(e) => setCurrentEmpresa({ ...currentEmpresa, nit: e.target.value })}
-                                        className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
+                                        className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
                                         placeholder="NIT Comercial"
                                     />
                                 </div>
@@ -302,7 +317,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                         type="text"
                                         value={currentEmpresa.sector || ''}
                                         onChange={(e) => setCurrentEmpresa({ ...currentEmpresa, sector: e.target.value })}
-                                        className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
+                                        className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
                                         placeholder="Ej: Industrial, IT"
                                     />
                                 </div>
@@ -332,10 +347,10 @@ const EmpresaSedeConfig: React.FC = () => {
             {/* Sede Modal */}
             {showSedeModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[#0d1117] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
                             <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                                <MapPin className="text-indigo-500" />
+                                <MapPin className="text-blue-500" />
                                 {currentSede.id ? 'Editar Sede' : 'Nueva Sede'}
                             </h2>
                             <button onClick={() => setShowSedeModal(false)} className="text-gray-500 hover:text-white transition-colors">
@@ -350,7 +365,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                     required
                                     value={currentSede.empresa_id || ''}
                                     onChange={(e) => setCurrentSede({ ...currentSede, empresa_id: parseInt(e.target.value) })}
-                                    className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all text-white appearance-none"
+                                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white appearance-none"
                                 >
                                     <option value="">Seleccionar Empresa...</option>
                                     {empresas.map(e => (
@@ -366,7 +381,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                     required
                                     value={currentSede.nombre || ''}
                                     onChange={(e) => setCurrentSede({ ...currentSede, nombre: e.target.value })}
-                                    className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all text-white"
+                                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
                                     placeholder="Ej: Sede Principal Bogota"
                                 />
                             </div>
@@ -377,7 +392,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                     type="text"
                                     value={currentSede.direccion || ''}
                                     onChange={(e) => setCurrentSede({ ...currentSede, direccion: e.target.value })}
-                                    className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all text-white"
+                                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
                                     placeholder="Calle, Ciudad, Pais"
                                 />
                             </div>
@@ -388,7 +403,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                     type="text"
                                     value={currentSede.contacto || ''}
                                     onChange={(e) => setCurrentSede({ ...currentSede, contacto: e.target.value })}
-                                    className="w-full bg-[#161b22] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all text-white"
+                                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition-all text-white"
                                     placeholder="+57..."
                                 />
                             </div>
@@ -403,7 +418,7 @@ const EmpresaSedeConfig: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-6 py-3 rounded-xl bg-indigo-600 text-sm font-bold text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 px-6 py-3 rounded-xl bg-[#055098] text-sm font-bold text-white hover:bg-blue-500 shadow-lg shadow-[#055098]/30 active:scale-95 transition-all flex items-center justify-center gap-2"
                                 >
                                     <Save size={18} />
                                     {currentSede.id ? 'Actualizar' : 'Crear Sede'}
@@ -418,3 +433,4 @@ const EmpresaSedeConfig: React.FC = () => {
 };
 
 export default EmpresaSedeConfig;
+

@@ -8,7 +8,7 @@ async function check() {
     try {
         console.log('--- TABLE STRUCTURES ---');
 
-        const tables = ['applications', 'candidate_notifications', 'candidate_accounts'];
+        const tables = ['candidatos', 'candidatos_seguimiento'];
 
         for (const table of tables) {
             console.log(`\nChecking ${table}:`);
@@ -19,13 +19,6 @@ async function check() {
                 console.log(`Table ${table} does not exist or error: ${e.message}`);
             }
         }
-
-        console.log('\n--- DATA CHECK ---');
-        try {
-            const [users] = await pool.query('SELECT id, email, type FROM candidate_accounts LIMIT 5');
-            console.log('Candidate Accounts:', users);
-        } catch (e) { console.log('Error querying candidate_accounts:', e.message); }
-
     } catch (error) {
         console.error('Script error:', error);
     } finally {

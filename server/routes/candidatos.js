@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const activityLogService = require('../services/ActivityLogService');
 const aiService = require('../services/aiService');
+const auditService = require('../services/AuditService');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 const emailService = require('../services/EmailService');
 
@@ -15,6 +16,7 @@ router.get('/', verifyToken, requireRole(allowedRoles), async (req, res) => {
             SELECT c.*, v.puesto_nombre, v.codigo_requisicion, v.fecha_apertura
             FROM candidatos_seguimiento c
             JOIN vacantes v ON c.vacante_id = v.id
+            WHERE c.deleted_at IS NULL
             ORDER BY c.id DESC
         `);
         res.json(rows);
@@ -43,7 +45,7 @@ router.get('/analytics/bottlenecks', verifyToken, requireRole(allowedRoles), asy
 router.get('/vacante/:vacanteId', verifyToken, requireRole(allowedRoles), async (req, res) => {
     const { vacanteId } = req.params;
     try {
-        const [rows] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE vacante_id = ?', [vacanteId]);
+        const [rows] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE vacante_id = ? AND deleted_at IS NULL', [vacanteId]);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -54,10 +56,73 @@ router.get('/vacante/:vacanteId', verifyToken, requireRole(allowedRoles), async 
 router.get('/:id', verifyToken, requireRole(allowedRoles), async (req, res) => {
     const { id } = req.params;
     try {
+        // 1. Get tracking record
         const [rows] = await pool.query('SELECT * FROM candidatos_seguimiento WHERE id = ?', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Candidato no encontrado' });
-        res.json(rows[0]);
+        
+        const candidato = rows[0];
+        
+        // 2. Enrich with portal data if cedula exists
+        if (candidato.cedula) {
+            try {
+                const [portalRows] = await pool.query('SELECT * FROM candidatos WHERE cedula = ?', [candidato.cedula]);
+                if (portalRows.length > 0) {
+                    const p = portalRows[0];
+                    // Merge portal data into tracking record (tracking data takes priority for shared fields)
+                    candidato.tipo_identificacion = p.tipo_identificacion || null;
+                    candidato.segundo_nombre = p.segundo_nombre || null;
+                    candidato.segundo_apellido = p.segundo_apellido || null;
+                    candidato.primer_apellido = p.primer_apellido || null;
+                    candidato.lugar_expedicion = p.lugar_expedicion || null;
+                    candidato.fecha_expedicion = p.fecha_expedicion || null;
+                    candidato.direccion = p.direccion || null;
+                    candidato.fecha_nacimiento = p.fecha_nacimiento || null;
+                    candidato.grupo_etnico = p.grupo_etnico || null;
+                    candidato.genero = p.genero || null;
+                    candidato.estado_civil = p.estado_civil || null;
+                    candidato.tiene_familiar = p.tiene_familiar || null;
+                    candidato.parentesco_familiar = p.parentesco_familiar || null;
+                    candidato.nombre_familiar = p.nombre_familiar || null;
+                    candidato.telefono_familiar = p.telefono_familiar || null;
+                    candidato.tipo_vivienda = p.tipo_vivienda || null;
+                    candidato.servicios_publicos = p.servicios_publicos || null;
+                    candidato.estrato = p.estrato || null;
+                    candidato.tipo_vehiculo = p.tipo_vehiculo || null;
+                    candidato.vehiculo_placa = p.vehiculo_placa || null;
+                    candidato.vehiculo_marca_modelo = p.vehiculo_marca_modelo || null;
+                    candidato.vehiculo_modelo_ano = p.vehiculo_modelo_ano || null;
+                    candidato.vehiculo_nombre_propietario = p.vehiculo_nombre_propietario || null;
+                    candidato.vehiculo_cedula_propietario = p.vehiculo_cedula_propietario || null;
+                    candidato.tiene_tarjeta_profesional = p.tiene_tarjeta_profesional || null;
+                    candidato.numero_tarjeta_profesional = p.numero_tarjeta_profesional || null;
+                    candidato.formacion_academica = p.formacion_academica || null;
+                    candidato.historial_laboral = p.historial_laboral || null;
+                    candidato.tiene_hijos = p.tiene_hijos || null;
+                    candidato.cantidad_hijos = p.cantidad_hijos || 0;
+                    candidato.cabeza_familia = p.cabeza_familia || null;
+                    candidato.discapacidad = p.discapacidad || null;
+                    candidato.dispuesto_celular = p.dispuesto_celular || null;
+                    candidato.casco_integral = p.casco_integral || null;
+                    candidato.ano_matricula_moto = p.ano_matricula_moto || null;
+                    // Use portal email/phone/cv if tracking doesn't have them
+                    candidato.email = candidato.email || p.email || null;
+                    candidato.telefono = candidato.telefono || p.telefono || null;
+                    candidato.nivel_educativo = p.titulo_profesional || null;
+                    candidato.experiencia_total_anos = p.experiencia_total_anos || 0;
+                    candidato.ciudad = p.ciudad || null;
+                    // Use portal CV if tracking CV is empty
+                    if (!candidato.cv_url && p.cv_url) {
+                        candidato.cv_url = p.cv_url;
+                    }
+                }
+            } catch (portalErr) {
+                console.log('Portal data enrichment skipped:', portalErr.message);
+            }
+        }
+        
+        res.json(candidato);
     } catch (error) {
+        console.error('Error GET /candidatos/:id', error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -101,6 +166,16 @@ router.post('/', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador'])
             VALUES (?, ?, ?)
         `, [vacante_id, result.insertId, etapa_actual || 'Postulación']);
 
+        await auditService.log(
+            req.user?.id || null,
+            req.user?.email || null,
+            'candidatos_seguimiento',
+            result.insertId,
+            'CREATE',
+            { vacante_id, nombre_candidato, etapa_actual: etapa_actual || 'Postulación' },
+            req.ip
+        );
+
         res.json({ id: result.insertId, message: 'Candidato registrado exitosamente' });
     } catch (error) {
         console.error('Error in POST /candidatos:', error);
@@ -137,6 +212,40 @@ router.put('/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador'
                         [currentRecord.vacante_id, id, updates.etapa_actual]
                     );
                     console.log('NASA Historial: Table updated successfully.');
+
+                    // 📧 AUTOMATED CANDIDATE NOTIFICATION (MAGIC LINK)
+                    try {
+                        const [cDataRows] = await pool.query(`
+                            SELECT cs.nombre_candidato, cs.vacante_id, a.email, a.id as application_id, v.puesto_nombre
+                            FROM candidatos_seguimiento cs
+                            JOIN vacantes v ON cs.vacante_id = v.id
+                            LEFT JOIN applications a ON cs.nombre_candidato = a.nombre AND cs.vacante_id = a.vacante_id
+                            WHERE cs.id = ?
+                            LIMIT 1
+                        `, [id]);
+
+                        if (cDataRows.length > 0 && cDataRows[0].email) {
+                            const candidateObj = cDataRows[0];
+                            let trackingUrl = null;
+                            if (candidateObj.application_id) {
+                                const [links] = await pool.query('SELECT tracking_token FROM application_tracking_links WHERE application_id = ?', [candidateObj.application_id]);
+                                if (links.length > 0) {
+                                    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                                    trackingUrl = baseUrl + '/track/' + links[0].tracking_token;
+                                }
+                            }
+                            
+                            await emailService.sendCandidateStageUpdateNotification(
+                                candidateObj.email,
+                                candidateObj.nombre_candidato,
+                                candidateObj.puesto_nombre,
+                                updates.etapa_actual,
+                                trackingUrl
+                            );
+                        }
+                    } catch (notifyErr) {
+                        console.error('⚠️ Could not send stage update notification:', notifyErr.message);
+                    }
 
                     // 📧 NOTIFY LIDER IF HIRED
                     if (updates.etapa_actual === 'Contratado') {
@@ -254,6 +363,16 @@ router.put('/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador'
         const [result] = await pool.query(sql, values);
         console.log('NASA Result:', result.info);
 
+        await auditService.log(
+            req.user?.id || null,
+            req.user?.email || null,
+            'candidatos_seguimiento',
+            id,
+            'UPDATE',
+            filteredUpdates,
+            req.ip
+        );
+
         console.log(`--- NASA UPDATE SUCCESS [ID: ${id}] ---\n`);
         return res.json({ message: 'Actualizado con éxito' });
 
@@ -276,16 +395,26 @@ router.delete('/:id', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutad
         const [candidate] = await pool.query('SELECT nombre_candidato, vacante_id FROM candidatos_seguimiento WHERE id = ?', [id]);
 
         if (candidate.length > 0) {
-            // Optional: delete matching logic in applications / history if needed
-            await pool.query('DELETE FROM historial_etapas WHERE candidato_id = ?', [id]).catch(e => console.log('historial deletion missing table/ref', e.message));
-            await pool.query('DELETE FROM ai_evaluations WHERE candidate_id = ?', [id]).catch(e => console.log('ai_evaluations deletion missing table/ref', e.message));
+            // Optional: We do NOT delete relations, since it's a soft delete
+            // await pool.query('DELETE FROM historial_etapas WHERE candidato_id = ?', [id]).catch(e => console.log('historial deletion missing table/ref', e.message));
         }
 
-        const [result] = await pool.query('DELETE FROM candidatos_seguimiento WHERE id = ?', [id]);
+        const [result] = await pool.query('UPDATE candidatos_seguimiento SET deleted_at = NOW(), resultado_final = "Eliminado del Sistema (Soft)" WHERE id = ? AND deleted_at IS NULL', [id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Candidato no encontrado o ya eliminado' });
         }
+
+        await auditService.log(
+            req.user?.id || null,
+            req.user?.email || null,
+            'candidatos_seguimiento',
+            id,
+            'DELETE (Soft)',
+            { candidateName: candidate.length > 0 ? candidate[0].nombre_candidato : 'Desconocido', vacante_id: candidate.length > 0 ? candidate[0].vacante_id : null },
+            req.ip
+        );
+
         res.json({ message: 'Candidato eliminado correctamente' });
     } catch (error) {
         console.error('Error deleting candidato:', error);
@@ -335,6 +464,35 @@ router.get('/:id/activity', verifyToken, requireRole(allowedRoles), async (req, 
         res.status(500).json({ error: error.message });
     }
 });
+
+// GET audit history for a candidate (For Timeline View)
+router.get('/:id/audit', verifyToken, requireRole(allowedRoles), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query(`
+            SELECT 
+                id, 
+                user_email, 
+                action, 
+                changes, 
+                created_at,
+                entity_name
+            FROM system_audit_logs
+            WHERE (entity_name = 'candidatos_seguimiento' AND entity_id = ?)
+               OR (entity_name = 'candidatos' AND entity_id = (
+                   SELECT cedula FROM candidatos_seguimiento WHERE id = ?
+               ))
+            ORDER BY created_at DESC
+            LIMIT 50
+        `, [id, id]);
+        
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching candidate audit logs:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // POST analyze candidate behavior with AI
 router.post('/:id/analyze-behavior', verifyToken, requireRole(allowedRoles), async (req, res) => {

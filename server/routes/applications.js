@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const applicationService = require('../services/ApplicationService');
 const pool = require('../db');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+
+const allowedRoles = ['Superadmin', 'Admin', 'Reclutador', 'Lider'];
 
 /**
  * POST /api/applications/apply
@@ -28,7 +31,7 @@ router.post('/apply', async (req, res) => {
  * GET /api/applications/vacancy/:id
  * Obtener todas las postulaciones de una vacante
  */
-router.get('/vacancy/:id', async (req, res) => {
+router.get('/vacancy/:id', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const vacancyId = req.params.id;
         const filters = {
@@ -48,7 +51,7 @@ router.get('/vacancy/:id', async (req, res) => {
  * GET /api/applications/candidate/:email
  * Obtener postulaciones de un candidato por email
  */
-router.get('/candidate/:email', async (req, res) => {
+router.get('/candidate/:email', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const email = req.params.email;
         const applications = await applicationService.getApplicationsByCandidate(email);
@@ -64,7 +67,7 @@ router.get('/candidate/:email', async (req, res) => {
  * PUT /api/applications/:id/status
  * Actualizar estado de una postulación
  */
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador']), async (req, res) => {
     try {
         const applicationId = req.params.id;
         const { status, notes } = req.body;
@@ -86,7 +89,7 @@ router.put('/:id/status', async (req, res) => {
  * GET /api/applications/matches/:vacancyId
  * Obtener matches automáticos para una vacante
  */
-router.get('/matches/:vacancyId', async (req, res) => {
+router.get('/matches/:vacancyId', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const vacancyId = req.params.vacancyId;
         const minScore = parseInt(req.query.minScore) || 70;
@@ -104,7 +107,7 @@ router.get('/matches/:vacancyId', async (req, res) => {
  * GET /api/applications/stats
  * Estadísticas generales de postulaciones
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const stats = await applicationService.getApplicationStats(null);
         res.json(stats);
@@ -119,7 +122,7 @@ router.get('/stats', async (req, res) => {
  * GET /api/applications/stats/:vacancyId
  * Estadísticas de postulaciones por vacante
  */
-router.get('/stats/:vacancyId', async (req, res) => {
+router.get('/stats/:vacancyId', verifyToken, requireRole(allowedRoles), async (req, res) => {
     try {
         const vacancyId = req.params.vacancyId;
         const stats = await applicationService.getApplicationStats(vacancyId);
@@ -215,7 +218,7 @@ router.get('/public/jobs/:slug', async (req, res) => {
  * POST /api/applications/public/toggle/:vacancyId
  * Hacer una vacante pública o privada
  */
-router.post('/public/toggle/:vacancyId', async (req, res) => {
+router.post('/public/toggle/:vacancyId', verifyToken, requireRole(['Superadmin', 'Admin', 'Reclutador']), async (req, res) => {
     try {
         const vacancyId = req.params.vacancyId;
         const { isPublic } = req.body;

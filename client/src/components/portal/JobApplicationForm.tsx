@@ -434,3 +434,4 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ vacancyId, vaca
 };
 
 export default JobApplicationForm;
+

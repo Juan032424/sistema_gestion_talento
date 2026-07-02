@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const trackingService = require('../services/ApplicationTrackingService');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const { trackingPublicLimiter } = require('../middleware/rateLimiter');
 
 /**
  * POST /api/tracking/create/:applicationId
@@ -21,10 +23,39 @@ router.post('/create/:applicationId', async (req, res) => {
 });
 
 /**
+ * GET /api/tracking/admin/links
+ * Obtener todos los tracking links generados para control superadmin
+ */
+router.get('/admin/links', verifyToken, requireRole(['Superadmin']), async (req, res) => {
+    try {
+        const result = await trackingService.getAllTrackingLinks();
+        res.json(result);
+    } catch (error) {
+        console.error('Error getting tracking links admin:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * DELETE /api/tracking/admin/links/:token
+ * Revocar (eliminar) un link de tracking manualmente por Superadmin
+ */
+router.delete('/admin/links/:token', verifyToken, requireRole(['Superadmin']), async (req, res) => {
+    try {
+        const { token } = req.params;
+        const result = await trackingService.revokeTrackingLink(token);
+        res.json(result);
+    } catch (error) {
+        console.error('Error revoking tracking link admin:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * GET /api/tracking/:token
  * Obtener status de postulación con tracking token
  */
-router.get('/:token', async (req, res) => {
+router.get('/:token', trackingPublicLimiter, async (req, res) => {
     try {
         const { token } = req.params;
 
@@ -42,7 +73,7 @@ router.get('/:token', async (req, res) => {
  * POST /api/tracking/:token/feedback
  * Actualizar feedback del candidato
  */
-router.post('/:token/feedback', async (req, res) => {
+router.post('/:token/feedback', trackingPublicLimiter, async (req, res) => {
     try {
         const { token } = req.params;
         const { notes, rating, feedback } = req.body;
@@ -83,7 +114,7 @@ router.post('/:token/notification/:notificationId/read', async (req, res) => {
  * POST /api/tracking/send-notification/:applicationId
  * Enviar notificación a candidato (para uso interno)
  */
-router.post('/send-notification/:applicationId', async (req, res) => {
+router.post('/send-notification/:applicationId', verifyToken, requireRole(['Superadmin', 'Admin']), async (req, res) => {
     try {
         const { applicationId } = req.params;
         const { tipo, titulo, mensaje, actionUrl } = req.body;

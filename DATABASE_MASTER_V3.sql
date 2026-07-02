@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
+    cedula VARCHAR(50) DEFAULT NULL,
     role_id INT NOT NULL,
     avatar_url VARCHAR(500),
     status ENUM('active', 'inactive') DEFAULT 'active',

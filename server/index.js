@@ -16,9 +16,11 @@ const searchRouter = require('./routes/search');
 const sourcingRouter = require('./routes/sourcing');
 const intelligenceRouter = require('./routes/intelligence');
 const applicationsRouter = require('./routes/applications');
+const erpRoutes = require('./routes/erp'); // Módulo de Integración ERP
 const requestLogger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 const { verifyToken, requireRole } = require('./middleware/authMiddleware');
+const compression = require('compression');
 
 // Agent Imports
 const analystAgent = require('./agents/analystAgent');
@@ -29,6 +31,7 @@ const sourcingAgent = require('./agents/sourcingAgent');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.use(compression());
 app.use(cors());
 app.use(express.json());
 
@@ -38,8 +41,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // Logger Middleware
 app.use(requestLogger);
 
+// Global API Rate Limiter
+const { globalApiLimiter } = require('./middleware/rateLimiter');
+app.use('/api', globalApiLimiter);
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/sigae/auth', require('./routes/sigaeAuth'));
 app.use('/api/candidate-auth', require('./routes/candidateAuth')); // Autenticación de candidatos (LEGACY)
 app.use('/api/candidates', require('./routes/candidates')); // 🆕 Sistema completo de candidatos
 app.use('/api/tracking', require('./routes/tracking')); // Tracking con links mágicos
@@ -114,12 +122,19 @@ app.get('/api/referidos', verifyToken, async (req, res) => {
 });
 
 app.post('/api/referidos', verifyToken, async (req, res) => {
-    const { candidate_name, candidate_contact, vacancy_id } = req.body;
+    const { candidate_name, candidate_contact, vacancy_id, referrer_name, referrer_cedula } = req.body;
     try {
         const [result] = await pool.query(`
-            INSERT INTO referidos (referrer_name, referrer_email, candidate_name, candidate_contact, vacancy_id, status, recruiter_points)
-            VALUES (?, ?, ?, ?, ?, 'Pending', 100)
-        `, [req.user.fullName, req.user.email, candidate_name, candidate_contact, vacancy_id]);
+            INSERT INTO referidos (referrer_name, referrer_cedula, referrer_email, candidate_name, candidate_contact, vacancy_id, status, recruiter_points)
+            VALUES (?, ?, ?, ?, ?, ?, 'Pending', 100)
+        `, [
+            referrer_name || req.user.fullName,
+            referrer_cedula || null,
+            req.user.email,
+            candidate_name,
+            candidate_contact,
+            vacancy_id
+        ]);
 
         res.json({ success: true, id: result.insertId, message: 'Referido registrado con éxito (100 puntos iniciales)' });
     } catch (error) {

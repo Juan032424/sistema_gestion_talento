@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useCandidateAuth } from '../../context/CandidateAuthContext';
 import api from '../../api';
 import {
-    User, Briefcase, BookmarkIcon, Bell, FileText, Award,
+    User, Briefcase, BookmarkIcon, FileText, Award,
     Edit, LogOut, CheckCircle, XCircle, Clock, TrendingUp,
-    MapPin, Mail, Phone, Calendar, DollarSign
+    MapPin, Mail, Phone
 } from 'lucide-react';
 
 /**
@@ -46,7 +46,6 @@ const CandidateDashboard: React.FC = () => {
     const [profile, setProfile] = useState<CandidateProfile | null>(null);
     const [applications, setApplications] = useState<Application[]>([]);
     const [savedJobs, setSavedJobs] = useState<any[]>([]);
-    const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -56,17 +55,15 @@ const CandidateDashboard: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [profileRes, appsRes, savedRes, notifsRes] = await Promise.all([
+            const [profileRes, appsRes, savedRes] = await Promise.all([
                 api.get('/candidates/profile'),
                 api.get('/candidates/applications'),
-                api.get('/candidates/saved-jobs'),
-                api.get('/candidates/notifications')
+                api.get('/candidates/saved-jobs')
             ]);
 
             setProfile(profileRes.data.profile);
             setApplications(appsRes.data.applications || []);
             setSavedJobs(savedRes.data.savedJobs || []);
-            setNotifications(notifsRes.data.notifications || []);
         } catch (error) {
             console.error('Error loading data:', error);
         } finally {
@@ -78,7 +75,7 @@ const CandidateDashboard: React.FC = () => {
         const colors: Record<string, string> = {
             'Nueva': 'bg-blue-100 text-blue-800',
             'En Revisión': 'bg-yellow-100 text-yellow-800',
-            'Entrevista': 'bg-purple-100 text-purple-800',
+            'Entrevista': 'bg-blue-100 text-blue-800',
             'Finalista': 'bg-green-100 text-green-800',
             'Descartado': 'bg-red-100 text-red-800',
             'Contratado': 'bg-emerald-100 text-emerald-800'
@@ -100,20 +97,20 @@ const CandidateDashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
             {/* Header */}
             <header className="bg-white shadow-md border-b-4 border-blue-500">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-4">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
                                 {user?.nombre?.charAt(0)?.toUpperCase()}
                             </div>
                             <div>
@@ -159,13 +156,13 @@ const CandidateDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+                    <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-400">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-600 text-sm">Guardadas</p>
                                 <p className="text-3xl font-bold text-gray-900">{savedJobs.length}</p>
                             </div>
-                            <BookmarkIcon className="w-12 h-12 text-purple-500 opacity-50" />
+                            <BookmarkIcon className="w-12 h-12 text-blue-400 opacity-50" />
                         </div>
                     </div>
 
@@ -323,14 +320,14 @@ const CandidateDashboard: React.FC = () => {
                                 </div>
 
                                 {/* Profile Completeness Bar */}
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl">
+                                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-medium text-gray-700">Completitud del Perfil</span>
                                         <span className="text-sm font-bold text-blue-600">{profile.profileCompleteness}%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                         <div
-                                            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-500"
+                                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500"
                                             style={{ width: `${profile.profileCompleteness}%` }}
                                         ></div>
                                     </div>
@@ -429,3 +426,4 @@ const CandidateDashboard: React.FC = () => {
 };
 
 export default CandidateDashboard;
+

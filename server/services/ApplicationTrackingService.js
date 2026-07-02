@@ -80,20 +80,63 @@ class ApplicationTrackingService {
     }
 
     /**
+     * Obtener todos los links de tracking (Para SuperAdmin)
+     */
+    async getAllTrackingLinks() {
+        try {
+            const [links] = await pool.query(`
+                SELECT atl.*, a.nombre as candidato_nombre, a.email, a.estado as application_estado, 
+                       v.puesto_nombre, v.codigo_requisicion
+                FROM application_tracking_links atl
+                INNER JOIN applications a ON atl.application_id = a.id
+                INNER JOIN vacantes v ON a.vacante_id = v.id
+                ORDER BY atl.created_at DESC
+            `);
+
+            return links.map(link => ({
+                ...link,
+                trackingUrl: this.generateTrackingUrl(link.tracking_token)
+            }));
+        } catch (error) {
+            console.error(`[${this.name}] Error obteniendo todos los links:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Revocar/Eliminar un link de tracking (Para SuperAdmin)
+     */
+    async revokeTrackingLink(trackingToken) {
+        try {
+            await pool.query('DELETE FROM application_tracking_links WHERE tracking_token = ?', [trackingToken]);
+            return { success: true, message: 'Link revocado exitosamente' };
+        } catch (error) {
+            console.error(`[${this.name}] Error revocando link:`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtener status de postulación con tracking token
      */
     async getApplicationStatus(trackingToken) {
         try {
             // 1. Validar el token
             const [links] = await pool.query(`
-                SELECT atl.*, a.*,
-                       v.puesto_nombre, v.ubicacion, v.salario_min, v.salario_max,
-                       v.modalidad_trabajo, v.experiencia_requerida,
-                       e.nombre as empresa_nombre
+                SELECT atl.*, a.*, 
+                       v.puesto_nombre, v.codigo_requisicion, v.salario_base_ofrecido,
+                       v.observaciones as vacante_descripcion, v.estado as vacante_estado,
+                       s.nombre as sede_nombre,
+                       p.nombre as proceso_nombre,
+                       cs.calificacion_tecnica, cs.resultado_final, cs.etapa_actual as etapa_seguimiento,
+                       cs.estado_entrevista, cs.fecha_entrevista, cs.motivo_no_apto
                 FROM application_tracking_links atl
                 INNER JOIN applications a ON atl.application_id = a.id
                 INNER JOIN vacantes v ON a.vacante_id = v.id
-                LEFT JOIN empresas e ON v.empresa_id = e.id
+                LEFT JOIN sedes s ON v.sede_id = s.id
+                LEFT JOIN procesos p ON v.proceso_id = p.id
+                LEFT JOIN candidatos c ON a.candidato_id = c.id
+                LEFT JOIN candidatos_seguimiento cs ON (a.vacante_id = cs.vacante_id AND c.cedula COLLATE utf8mb4_unicode_ci = cs.cedula COLLATE utf8mb4_unicode_ci)
                 WHERE atl.tracking_token = ?
                 AND atl.expires_at > NOW()
             `, [trackingToken]);
@@ -112,22 +155,37 @@ class ApplicationTrackingService {
                 WHERE tracking_token = ?
             `, [trackingToken]);
 
-            // 3. Actualizar timestamp de vista del candidato
-            await pool.query(
-                'UPDATE applications SET candidate_viewed_at = NOW() WHERE id = ?',
-                [data.application_id]
-            );
+            // 3. Actualizar timestamp de vista del candidato (optional)
+            try {
+                await pool.query(
+                    'UPDATE applications SET candidate_viewed_at = NOW() WHERE id = ?',
+                    [data.application_id]
+                );
+            } catch (e) {
+                console.log(`[${this.name}] candidate_viewed_at no disponible:`, e.message);
+            }
 
-            // 4. Obtener timeline de cambios de estado
-            const timeline = await this.getApplicationTimeline(data.application_id);
+            // 4. Obtener timeline de cambios de estado (optional)
+            let timeline = [];
+            try {
+                timeline = await this.getApplicationTimeline(data.application_id);
+            } catch (e) {
+                console.log(`[${this.name}] Timeline no disponible:`, e.message);
+            }
 
-            // 5. Obtener notificaciones no leídas
-            const [notifications] = await pool.query(`
-                SELECT * FROM candidate_notifications
-                WHERE application_id = ?
-                AND is_read = FALSE
-                ORDER BY created_at DESC
-            `, [data.application_id]);
+            // 5. Obtener notificaciones no leídas (optional)
+            let notifications = [];
+            try {
+                const [notifRows] = await pool.query(`
+                    SELECT * FROM candidate_notifications
+                    WHERE candidate_account_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT 10
+                `, [data.candidate_account_id || 0]);
+                notifications = notifRows;
+            } catch (e) {
+                console.log(`[${this.name}] Notificaciones no disponibles:`, e.message);
+            }
 
             console.log(`[${this.name}] ✅ Status obtenido para application #${data.application_id}`);
 
@@ -144,15 +202,21 @@ class ApplicationTrackingService {
                     auto_match_score: data.auto_match_score,
                     notas_reclutador: data.notas_reclutador,
                     candidate_notes: data.candidate_notes,
-                    rating_by_candidate: data.rating_by_candidate
+                    rating_by_candidate: data.rating_by_candidate,
+                    calificacion_tecnica: data.calificacion_tecnica,
+                    resultado_final: data.resultado_final,
+                    etapa_seguimiento: data.etapa_seguimiento,
+                    estado_entrevista: data.estado_entrevista,
+                    fecha_entrevista: data.fecha_entrevista,
+                    motivo_no_apto: data.motivo_no_apto
                 },
                 vacancy: {
                     puesto_nombre: data.puesto_nombre,
-                    ubicacion: data.ubicacion,
-                    salario_min: data.salario_min,
-                    salario_max: data.salario_max,
-                    modalidad_trabajo: data.modalidad_trabajo,
-                    empresa_nombre: data.empresa_nombre
+                    codigo_requisicion: data.codigo_requisicion,
+                    ubicacion: data.sede_nombre || 'Cartagena, Colombia',
+                    salario_base_ofrecido: data.salario_base_ofrecido,
+                    modalidad_trabajo: data.proceso_nombre || 'Presencial',
+                    empresa_nombre: 'DISCOL S.A.S.'
                 },
                 timeline,
                 notifications,

@@ -1,0 +1,418 @@
+[
+  {
+    "Field": "id",
+    "Type": "int(11)",
+    "Null": "NO",
+    "Key": "PRI",
+    "Default": null,
+    "Extra": "auto_increment"
+  },
+  {
+    "Field": "primer_nombre",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "email",
+    "Type": "varchar(255)",
+    "Null": "NO",
+    "Key": "UNI",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "telefono",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "ciudad",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "titulo_profesional",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "password_hash",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "avatar_url",
+    "Type": "varchar(512)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "cv_url",
+    "Type": "varchar(512)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "created_at",
+    "Type": "datetime",
+    "Null": "YES",
+    "Key": "",
+    "Default": "current_timestamp()",
+    "Extra": ""
+  },
+  {
+    "Field": "updated_at",
+    "Type": "datetime",
+    "Null": "YES",
+    "Key": "",
+    "Default": "current_timestamp()",
+    "Extra": "on update current_timestamp()"
+  },
+  {
+    "Field": "experiencia_total_anos",
+    "Type": "int(11)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "0",
+    "Extra": ""
+  },
+  {
+    "Field": "fuente",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "Portal",
+    "Extra": ""
+  },
+  {
+    "Field": "etapa",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "Nuevo",
+    "Extra": ""
+  },
+  {
+    "Field": "estado",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "Activo",
+    "Extra": ""
+  },
+  {
+    "Field": "salario_esperado",
+    "Type": "decimal(12,2)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "0.00",
+    "Extra": ""
+  },
+  {
+    "Field": "cedula",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "tipo_identificacion",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "grupo_etnico",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "genero",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "estado_civil",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "tiene_familiar",
+    "Type": "enum('Si','No')",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "parentesco_familiar",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "nombre_familiar",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "telefono_familiar",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "tipo_vivienda",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "servicios_publicos",
+    "Type": "longtext",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "estrato",
+    "Type": "varchar(20)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "tipo_vehiculo",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "vehiculo_placa",
+    "Type": "varchar(20)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "vehiculo_marca_modelo",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "vehiculo_modelo_ano",
+    "Type": "varchar(20)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "vehiculo_nombre_propietario",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "vehiculo_cedula_propietario",
+    "Type": "varchar(50)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "segundo_nombre",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "segundo_apellido",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "lugar_expedicion",
+    "Type": "varchar(150)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "fecha_expedicion",
+    "Type": "date",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "direccion",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "fecha_nacimiento",
+    "Type": "date",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "primer_apellido",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "tiene_tarjeta_profesional",
+    "Type": "varchar(10)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "No",
+    "Extra": ""
+  },
+  {
+    "Field": "numero_tarjeta_profesional",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "formacion_academica",
+    "Type": "longtext",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "historial_laboral",
+    "Type": "longtext",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "tiene_hijos",
+    "Type": "varchar(10)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "No",
+    "Extra": ""
+  },
+  {
+    "Field": "cantidad_hijos",
+    "Type": "int(11)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "0",
+    "Extra": ""
+  },
+  {
+    "Field": "cabeza_familia",
+    "Type": "varchar(10)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "No",
+    "Extra": ""
+  },
+  {
+    "Field": "discapacidad",
+    "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "No tengo",
+    "Extra": ""
+  },
+  {
+    "Field": "dispuesto_celular",
+    "Type": "varchar(10)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "No",
+    "Extra": ""
+  },
+  {
+    "Field": "casco_integral",
+    "Type": "varchar(10)",
+    "Null": "YES",
+    "Key": "",
+    "Default": "No",
+    "Extra": ""
+  },
+  {
+    "Field": "ano_matricula_moto",
+    "Type": "varchar(20)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  }
+]

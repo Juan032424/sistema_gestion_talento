@@ -10,8 +10,8 @@ export const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, t
     </div>
 );
 
-export const PremiumInput = ({ label, icon, ...props }: any) => (
-    <div className={`input-group-premium group ${props.containerClassName || ''}`}>
+export const PremiumInput = ({ label, icon, containerClassName, ...props }: any) => (
+    <div className={`input-group-premium group ${containerClassName || ''}`}>
         <input
             {...props}
             placeholder=" "
@@ -21,15 +21,15 @@ export const PremiumInput = ({ label, icon, ...props }: any) => (
             {label}
         </label>
         {icon && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 peer-focus:text-[#3a94cc] transition-colors pointer-events-none">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 peer-focus:text-[#055098] transition-colors pointer-events-none">
                 {icon}
             </div>
         )}
     </div>
 );
 
-export const PremiumSelect = ({ label, options, icon, ...props }: any) => (
-    <div className={`input-group-premium group ${props.containerClassName || ''}`}>
+export const PremiumSelect = ({ label, options, icon, containerClassName, ...props }: any) => (
+    <div className={`input-group-premium group ${containerClassName || ''}`}>
         <select {...props} className={`input-premium peer appearance-none cursor-pointer ${props.className || ''}`}>
             {!props.value && <option value=""></option>}
             {options.map((opt: any) => (
@@ -41,8 +41,9 @@ export const PremiumSelect = ({ label, options, icon, ...props }: any) => (
         <label className="label-premium flex items-center gap-2">
             {label}
         </label>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none group-focus-within:text-[#3a94cc] transition-colors">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none group-focus-within:text-[#055098] transition-colors">
             {icon || <ChevronRight className="rotate-90" size={16} />}
         </div>
     </div>
 );
+
